@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Lab Stoikiometri Terintegrasi E-LKPD Guided Inquiry</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+    body { background: #0f172a; color: #f8fafc; padding: 15px; }
+
+    /* Header & Navigasi Tahapan */
+    .header-app { text-align: center; margin-bottom: 12px; }
+    .header-app h1 { color: #38bdf8; font-size: 1.3rem; }
+    .header-app p { color: #94a3b8; font-size: 0.8rem; }
+    
+    .stage-nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; border-bottom: 2px solid #334155; }
+    .stage-btn { background: #1e293b; border: 1px solid #475569; color: #94a3b8; padding: 8px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .stage-btn.active { background: #0284c7; color: white; border-color: #38bdf8; }
+
+    /* Grid Layout Utama */
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-header { font-weight: bold; color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 6px; margin-bottom: 10px; font-size: 0.88rem; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Display Area (Makro & Submikro) */
+    canvas { background: #090d16; border-radius: 8px; width: 100%; height: 200px; display: block; }
+    .macro-display { background: #090d16; border-radius: 8px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+
+    /* Element Visual Lab */
+    .scale-base { background: #334155; width: 130px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1rem; color: #38bdf8; font-weight: bold; border: 2px solid #64748b; margin-top: 5px; }
+    .beaker { width: 85px; height: 100px; border: 3px solid #cbd5e1; border-top: none; border-radius: 0 0 10px 10px; position: relative; background: rgba(255,255,255,0.05); }
+    .beaker-liquid { position: absolute; bottom: 0; width: 100%; height: 0%; background: rgba(56, 189, 248, 0.5); transition: all 1s ease; border-radius: 0 0 7px 7px; }
+    .precipitate { position: absolute; bottom: 0; width: 100%; height: 0%; background: #facc15; transition: all 1.5s ease; border-radius: 0 0 7px 7px; opacity: 0.8; }
+
+    /* Form Kontrol & E-LKPD Panel */
+    .control-group { margin-bottom: 8px; }
+    label { font-size: 0.78rem; color: #94a3b8; display: flex; justify-content: space-between; margin-bottom: 2px; }
+    input[type="range"] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
+    select, input[type="number"], input[type="text"] { width: 100%; padding: 6px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 4px; font-size: 0.8rem; }
+    button.action-btn { width: 100%; padding: 8px; background: #0284c7; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 0.8rem; }
+    button.action-btn:hover { background: #0369a1; }
+
+    .inquiry-panel { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 0.78rem; }
+    .inquiry-title { color: #facc15; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+    .formula-box { background: #0f172a; padding: 6px; border-radius: 6px; border: 1px solid #334155; font-size: 0.82rem; text-align: center; margin-bottom: 8px; color: #38bdf8; font-weight: bold; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 0.73rem; text-align: center; }
+    th, td { border: 1px solid #334155; padding: 4px; }
+    th { background: #0f172a; color: #38bdf8; }
+    .badge { background: #0369a1; padding: 2px 5px; border-radius: 4px; font-size: 0.7rem; color: white; }
+    .feedback-msg { margin-top: 6px; padding: 4px; border-radius: 4px; text-align: center; font-weight: bold; font-size: 0.75rem; display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header-app">
+    <h1>VIRTUAL LAB STOIKIOMETRI MULTI-REPRESENTASI</h1>
+    <p>Terintegrasi E-LKPD Guided Inquiry (Makroskopik - Submikroskopik - Simbolik)</p>
+  </div>
+
+  <!-- NAVIGASI SINKRON TAHAPAN BELAJAR -->
+  <div class="stage-nav">
+    <button class="stage-btn active" onclick="loadStage(1)">Tahap 1: Konsep Mol</button>
+    <button class="stage-btn" onclick="loadStage(2)">Tahap 2: Hukum Lavoisier</button>
+    <button class="stage-btn" onclick="loadStage(3)">Tahap 3: Penyetaraan Reaksi</button>
+    <button class="stage-btn" onclick="loadStage(4)">Tahap 4: Pereaksi Pembatas</button>
+    <button class="stage-btn" onclick="loadStage(5)">Tahap 5: Stoikiometri Larutan</button>
+  </div>
+
+  <div class="dashboard">
+    <!-- WINDOW 1: MAKROSKOPIK -->
+    <div class="card">
+      <div class="card-header">
+        <span>1. Jendela Makroskopik</span>
+        <span class="badge">Level Lab</span>
+      </div>
+      <div class="macro-display" id="macroDisplay"></div>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px;" id="macroDesc"></p>
+    </div>
+
+    <!-- WINDOW 2: SUBMIKROSKOPIK -->
+    <div class="card">
+      <div class="card-header">
+        <span>2. Jendela Submikroskopik</span>
+        <span class="badge" style="background:#805ad5;">Level Partikel</span>
+      </div>
+      <canvas id="submicroCanvas"></canvas>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px;" id="submicroDesc"></p>
+    </div>
+
+    <!-- WINDOW 3: SIMBOLIK & E-LKPD PANEL -->
+    <div class="card">
+      <div class="card-header">
+        <span>3. Jendela Simbolik & E-LKPD In-App</span>
+        <span class="badge" style="background:#dd6b20;">Guided Inquiry</span>
+      </div>
+      <div class="formula-box" id="symbolicFormula"></div>
+      
+      <!-- Panel Kontrol Input Simulasi -->
+      <div id="controlsContainer"></div>
+      
+      <!-- Panel Lembar Kerja Guided Inquiry (Terintegrasi E-LKPD) -->
+      <div class="inquiry-panel" id="inquiryPanel"></div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas Engine Setup
+    const canvas = document.getElementById('submicroCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    let currentStage = 1;
+    let particles = [];
+    let animationId = null;
+
+    // Class Visualisasi Partikel Submikroskopik
+    class Particle {
+      constructor(type, x, y, color, size = 5) {
+        this.type = type;
+        this.x = x || Math.random() * (canvas.width - 20) + 10;
+        this.y = y || Math.random() * (canvas.height - 20) + 10;
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.vy = (Math.random() - 0.5) * 1.5;
+        this.color = color;
+        this.size = size;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 10 || this.x > canvas.width - 10) this.vx *= -1;
+        if (this.y < 10 || this.y > canvas.height - 10) this.vy *= -1;
+      }
+    }
+
+    function startAnimation() {
+      if (animationId) cancelAnimationFrame(animationId);
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        animationId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    // Router Tahapan Pembelajaran
+    function loadStage(stageNum) {
+      currentStage = stageNum;
+      document.querySelectorAll('.stage-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === stageNum);
+      });
+      particles = [];
+
+      if (stageNum === 1) setupStage1();
+      else if (stageNum === 2) setupStage2();
+      else if (stageNum === 3) setupStage3();
+      else if (stageNum === 4) setupStage4();
+      else if (stageNum === 5) setupStage5();
+
+      startAnimation();
+    }
+
+    /* ==========================================================================
+       TAHAP 1: KONSEP MOL & KONVERSI KUANTITAS
+       ========================================================================== */
+    function setupStage1() {
+      document.getElementById('macroDisplay').innerHTML = `
+        <div style="width: 50px; height: 50px; background: #64748b; border-radius: 4px; border: 2px solid #94a3b8; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white;">Fe</div>
+        <div class="scale-base" id="digitalScale">56.00 g</div>
+      `;
+      document.getElementById('macroDesc').innerText = "Makroskopik: Pengukuran massa logam Besi (Fe) pada Neraca Digital.";
+      document.getElementById('submicroDesc').innerText = "Submikroskopik: Visualisasi Atom Besi. 1 Mol Fe (56g) = 6.02 × 10²³ Atom.";
+      document.getElementById('symbolicFormula').innerHTML = "n = m / Ar &nbsp;|&nbsp; N = n × 6.02 × 10²³";
+
+      document.getElementById('controlsContainer').innerHTML = `
+        <div class="control-group">
+          <label>Massa Besi (Fe): <span id="lblMass" style="color:#38bdf8;">56</span> Gram</label>
+          <input type="range" id="rngMass" min="14" max="112" step="14" value="56" oninput="updateStage1(this.value)">
+        </div>
+      `;
+
+      document.getElementById('inquiryPanel').innerHTML = `
+        <div class="inquiry-title">📝 Tugas Inquiry E-LKPD (Analisis Mol)</div>
+        <p>Berapa jumlah mol (n) jika massa Fe = <b id="inqMass">56</b> gram? (Ar Fe = 56)</p>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <input type="number" id="ansMol" placeholder="Masukkan nilai mol...">
+          <button style="width:70px; background:#38bdf8; border:none; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="checkInquiry1()">Cek</button>
+        </div>
+        <div class="feedback-msg" id="fb1"></div>
+      `;
+      updateStage1(56);
+    }
+
+    function updateStage1(mass) {
+      document.getElementById('lblMass').innerText = mass;
+      document.getElementById('digitalScale').innerText = parseFloat(mass).toFixed(2) + " g";
+      document.getElementById('inqMass').innerText = mass;
+
+      const moles = mass / 56;
+      particles = [];
+      for (let i = 0; i < Math.round(moles * 10); i++) {
+        particles.push(new Particle('Fe', null, null, '#64748b', 6));
+      }
+    }
+
+    function checkInquiry1() {
+      const mass = parseFloat(document.getElementById('rngMass').value);
+      const userAns = parseFloat(document.getElementById('ansMol').value);
+      const correctAns = mass / 56;
+      const fb = document.getElementById('fb1');
+      fb.style.display = 'block';
+
+      if (Math.abs(userAns - correctAns) < 0.05) {
+        fb.style.background = "#16a34a"; fb.innerText = "Benar! Mol (n) = Massa / Ar.";
+      } else {
+        fb.style.background = "#be123c"; fb.innerText = `Kurang tepat. Jawaban benar: ${correctAns} mol.`;
+      }
+    }
+
+    /* ==========================================================================
+       TAHAP 2: HUKUM LAVOISIER (KEKEKALAN MASSA)
+       ========================================================================== */
+    function setupStage2() {
+      document.getElementById('macroDisplay').innerHTML = `
+        <div class="beaker" style="display:flex; align-items:center; justify-content:center;">
+          <div id="flaskStatus" style="font-size:0.75rem; text-align:center; color:#facc15;">Wadah Tertutup</div>
+        </div>
+        <div class="scale-base" id="lavoisierScale">100.00 g</div>
+      `;
+      document.getElementById('macroDesc').innerText = "Makroskopik: Penimbangan sistem reaksi CaCO₃ + 2HCl pada wadah terbuka/tertutup.";
+      document.getElementById('submicroDesc').innerText = "Submikroskopik: Pergerakan atom sebelum & sesudah reaksi.";
+      document.getElementById('symbolicFormula').innerHTML = "CaCO₃(s) + 2HCl(aq) → CaCl₂(aq) + H₂O(l) + CO₂(g)";
+
+      document.getElementById('controlsContainer').innerHTML = `
+        <div class="control-group">
+          <label>Pilihan Sistem Reaksi:</label>
+          <select id="selSystem" onchange="resetStage2()">
+            <option value="closed">Wadah Tertutup (Sumbat Gabus)</option>
+            <option value="open">Wadah Terbuka (Gas Lepas)</option>
+          </select>
+        </div>
+        <button class="action-btn" onclick="runStage2()">REAKSIKAN REAKTAN</button>
+      `;
+
+      document.getElementById('inquiryPanel').innerHTML = `
+        <div class="inquiry-title">📝 Tugas Inquiry E-LKPD (Kekekalan Massa)</div>
+        <p>Apakah Hukum Lavoisier terbukti pada <b>Wadah Terbuka</b>? Mengapa massa akhir berkurang?</p>
+        <select id="ansLavoisier" style="margin-top:4px;">
+          <option value="">-- Pilih Jawaban --</option>
+          <option value="false">Tidak terbukti, karena gas CO₂ lepas ke udara</option>
+          <option value="true">Terbukti, karena atom terhapus</option>
+        </select>
+        <button class="action-btn" style="margin-top:6px;" onclick="checkInquiry2()">Verifikasi Jawaban</button>
+        <div class="feedback-msg" id="fb2"></div>
+      `;
+      resetStage2();
+    }
+
+    function resetStage2() {
+      const isClosed = document.getElementById('selSystem').value === 'closed';
+      document.getElementById('flaskStatus').innerText = isClosed ? "Wadah Tertutup" : "Wadah Terbuka";
+      document.getElementById('lavoisierScale').innerText = "100.00 g";
+      particles = [];
+      for (let i = 0; i < 12; i++) particles.push(new Particle('Reactant', null, null, '#38bdf8', 5));
+    }
+
+    function runStage2() {
+      const isClosed = document.getElementById('selSystem').value === 'closed';
+      const finalMass = isClosed ? 100.00 : 92.50;
+      document.getElementById('lavoisierScale').innerText = finalMass.toFixed(2) + " g";
+      particles = [];
+      const particleCount = isClosed ? 12 : 6;
+      for (let i = 0; i < particleCount; i++) particles.push(new Particle('Product', null, null, '#facc15', 5));
+    }
+
+    function checkInquiry2() {
+      const ans = document.getElementById('ansLavoisier').value;
+      const fb = document.getElementById('fb2');
+      fb.style.display = 'block';
+
+      if (ans === 'false') {
+        fb.style.background = "#16a34a"; fb.innerText = "Tepat! Pada wadah terbuka, gas CO₂ keluar sehingga massa terukur berkurang.";
+      } else {
+        fb.style.background = "#be123c"; fb.innerText = "Pilihan keliru. Hukum Lavoisier tetap berlaku, tetapi gas terlepas pada sistem terbuka.";
+      }
+    }
+
+    /* ==========================================================================
+       TAHAP 3: PENYETARAAN REAKSI KIMIA
+       ========================================================================== */
+    function setupStage3() {
+      document.getElementById('macroDisplay').innerHTML = `
+        <div style="font-size:1rem; color:#38bdf8; text-align:center;">
+          Reaksi Pembentukan Amonia<br><span style="font-size:2rem;">☁️</span>
+        </div>
+      `;
+      document.getElementById('macroDesc').innerText = "Makroskopik: Pembentukan gas amonia (NH₃) dari gas N₂ dan H₂.";
+      document.getElementById('submicroDesc').innerText = "Submikroskopik: Atom N (Biru) dan Atom H (Putih).";
+      document.getElementById('symbolicFormula').innerHTML = "<span id='eqFormula'>aN₂ + bH₂ → cNH₃</span>";
+
+      document.getElementById('controlsContainer').innerHTML = `
+        <div class="control-group">
+          <label>Koefisien a(N₂): <input type="number" id="coefA" value="1" min="1" max="5" onchange="updateStage3()"></label>
+          <label>Koefisien b(H₂): <input type="number" id="coefB" value="1" min="1" max="5" onchange="updateStage3()"></label>
+          <label>Koefisien c(NH₃): <input type="number" id="coefC" value="1" min="1" max="5" onchange="updateStage3()"></label>
+        </div>
+      `;
+
+      document.getElementById('inquiryPanel').innerHTML = `
+        <div class="inquiry-title">📝 Tugas Inquiry E-LKPD (Penyetaraan)</div>
+        <p>Tentukan kombinasi koefisien (a, b, c) terbulat agar reaksi setara!</p>
+        <div class="feedback-msg" id="fb3" style="display:block; background:#0f172a; border:1px solid #334155;">Status: Belum Setara</div>
+      `;
+      updateStage3();
+    }
+
+    function updateStage3() {
+      const a = parseInt(document.getElementById('coefA').value) || 1;
+      const b = parseInt(document.getElementById('coefB').value) || 1;
+      const c = parseInt(document.getElementById('coefC').value) || 1;
+
+      const isBalanced = (a === 1 && b === 3 && c === 2);
+      document.getElementById('eqFormula').innerText = `${a}N₂ + ${b}H₂ → ${c}NH₃`;
+
+      const fb = document.getElementById('fb3');
+      if (isBalanced) {
+        fb.style.background = "#16a34a"; fb.innerText = "REAKSI SETARA! (1 N₂ + 3 H₂ → 2 NH₃)";
+      } else {
+        fb.style.background = "#be123c"; fb.innerText = "Belum Setara. Sesuaikan koefisien N dan H!";
+      }
+
+      particles = [];
+      for (let i = 0; i < a * 2; i++) particles.push(new Particle('N', null, null, '#38bdf8', 6));
+      for (let i = 0; i < b * 2; i++) particles.push(new Particle('H', null, null, '#ffffff', 4));
+    }
+
+    /* ==========================================================================
+       TAHAP 4: PEREAKSI PEMBATAS (LIMITING REACTANT & TABEL M-R-S)
+       ========================================================================== */
+    function setupStage4() {
+      document.getElementById('macroDisplay').innerHTML = `
+        <div class="beaker">
+          <div class="beaker-liquid" id="waterLvl4"></div>
+        </div>
+      `;
+      document.getElementById('macroDesc').innerText = "Makroskopik: Pembentukan uap air H₂O dari reaksi 2H₂ + O₂ → 2H₂O.";
+      document.getElementById('submicroDesc').innerText = "Submikroskopik: Molekul H₂ (Biru), O₂ (Merah), H₂O (Ungu).";
+      document.getElementById('symbolicFormula').innerHTML = "2H₂ (g) + O₂ (g) → 2H₂O (g)";
+
+      document.getElementById('controlsContainer').innerHTML = `
+        <div class="control-group">
+          <label>Gas H₂ Mula-mula: <span id="lblH2">4</span> Molekul</label>
+          <input type="range" id="rngH2" min="2" max="10" step="2" value="4" oninput="updateStage4()">
+        </div>
+        <div class="control-group">
+          <label>Gas O₂ Mula-mula: <span id="lblO2">2</span> Molekul</label>
+          <input type="range" id="rngO2" min="1" max="10" step="1" value="2" oninput="updateStage4()">
+        </div>
+        <button class="action-btn" onclick="runStage4()">REAKSIKAN & RUN TABEL M-R-S</button>
+      `;
+
+      document.getElementById('inquiryPanel').innerHTML = `
+        <div class="inquiry-title">📝 Tugas Inquiry E-LKPD (Tabel M-R-S)</div>
+        <table>
+          <tr><th>Tahap</th><th>2H₂</th><th>O₂</th><th>2H₂O</th></tr>
+          <tr><td>Mula (M)</td><td id="mH2">4</td><td id="mO2">2</td><td>0</td></tr>
+          <tr><td>Reaksi (R)</td><td id="rH2">-</td><td id="rO2">-</td><td id="rH2O">-</td></tr>
+          <tr style="font-weight:bold;"><td>Sisa (S)</td><td id="sH2">-</td><td id="sO2">-</td><td id="sH2O">-</td></tr>
+        </table>
+        <div id="pembatasInfo" style="margin-top:6px; font-weight:bold; color:#38bdf8; text-align:center;"></div>
+      `;
+      updateStage4();
+    }
+
+    function updateStage4() {
+      const h2 = parseInt(document.getElementById('rngH2').value);
+      const o2 = parseInt(document.getElementById('rngO2').value);
+      document.getElementById('lblH2').innerText = h2;
+      document.getElementById('lblO2').innerText = o2;
+
+      document.getElementById('mH2').innerText = h2;
+      document.getElementById('mO2').innerText = o2;
+      document.getElementById('waterLvl4').style.height = '0%';
+
+      particles = [];
+      for (let i = 0; i < h2; i++) particles.push(new Particle('H2', null, null, '#38bdf8', 5));
+      for (let i = 0; i < o2; i++) particles.push(new Particle('O2', null, null, '#f43f5e', 7));
+    }
+
+    function runStage4() {
+      const h2 = parseInt(document.getElementById('rngH2').value);
+      const o2 = parseInt(document.getElementById('rngO2').value);
+
+      const rH2 = (h2 / 2 <= o2 / 1) ? h2 : o2 * 2;
+      const rO2 = (h2 / 2 <= o2 / 1) ? h2 / 2 : o2;
+      const rH2O = rH2;
+
+      document.getElementById('rH2').innerText = "-" + rH2;
+      document.getElementById('rO2').innerText = "-" + rO2;
+      document.getElementById('rH2O').innerText = "+" + rH2O;
+
+      document.getElementById('sH2').innerText = h2 - rH2;
+      document.getElementById('sO2').innerText = o2 - rO2;
+      document.getElementById('sH2O').innerText = rH2O;
+
+      const pembatas = (h2 / 2 <= o2 / 1) ? "Gas H₂" : "Gas O₂";
+      document.getElementById('pembatasInfo').innerText = "Pereaksi Pembatas: " + pembatas;
+
+      document.getElementById('waterLvl4').style.height = Math.min((rH2O / 10) * 100, 85) + '%';
+      particles = [];
+      for (let i = 0; i < h2 - rH2; i++) particles.push(new Particle('H2', null, null, '#38bdf8', 5));
+      for (let i = 0; i < o2 - rO2; i++) particles.push(new Particle('O2', null, null, '#f43f5e', 7));
+      for (let i = 0; i < rH2O; i++) particles.push(new Particle('H2O', null, null, '#a855f7', 6));
+    }
+
+    /* ==========================================================================
+       TAHAP 5: STOIKIOMETRI LARUTAN & REAKSI ENDAPAN
+       ========================================================================== */
+    function setupStage5() {
+      document.getElementById('macroDisplay').innerHTML = `
+        <div class="beaker">
+          <div class="beaker-liquid" style="height: 60%; background: rgba(250, 204, 21, 0.2);"></div>
+          <div class="precipitate" id="pptYellow"></div>
+        </div>
+      `;
+      document.getElementById('macroDesc').innerText = "Makroskopik: Pembentukan endapan kuning PbI₂.";
+      document.getElementById('submicroDesc').innerText = "Submikroskopik: Ion Pb²⁺ dan I⁻ terikat menjadi kristal endapan.";
+      document.getElementById('symbolicFormula').innerHTML = "Pb(NO₃)₂ + 2KI → PbI₂↓ + 2KNO₃";
+
+      document.getElementById('controlsContainer').innerHTML = `
+        <div class="control-group">
+          <label>Volume KI (0.1 M): <span id="lblVol">20</span> mL</label>
+          <input type="range" id="rngVol" min="10" max="50" step="10" value="20" oninput="updateStage5()">
+        </div>
+        <button class="action-btn" onclick="runStage5()">REAKSIKAN LARUTAN</button>
+      `;
+
+      document.getElementById('inquiryPanel').innerHTML = `
+        <div class="inquiry-title">📝 Tugas Inquiry E-LKPD (Massa Endapan)</div>
+        <p>Hitung massa endapan teoritis PbI₂ (Mr=461) dari <span id="inqVol">20</span> mL KI 0.1 M!</p>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <input type="number" id="ansMass" step="0.001" placeholder="Massa (gram)...">
+          <button style="width:70px; background:#38bdf8; border:none; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="checkInquiry5()">Cek</button>
+        </div>
+        <div class="feedback-msg" id="fb5"></div>
+      `;
+      updateStage5();
+    }
+
+    function updateStage5() {
+      const vol = parseInt(document.getElementById('rngVol').value);
+      document.getElementById('lblVol').innerText = vol;
+      document.getElementById('inqVol').innerText = vol;
+      document.getElementById('pptYellow').style.height = '0%';
+      particles = [];
+      for (let i = 0; i < 8; i++) particles.push(new Particle('Pb', null, null, '#facc15', 7));
+      for (let i = 0; i < 12; i++) particles.push(new Particle('I', null, null, '#38bdf8', 4));
+    }
+
+    function runStage5() {
+      const vol = parseInt(document.getElementById('rngVol').value);
+      document.getElementById('pptYellow').style.height = Math.min(vol * 0.8, 40) + '%';
+      particles = [];
+      for (let i = 0; i < 15; i++) {
+        const p = new Particle('PbI2', canvas.width / 2 + (Math.random() * 60 - 30), canvas.height - 15, '#facc15', 6);
+        p.vx = 0; p.vy = 0;
+        particles.push(p);
+      }
+    }
+
+    function checkInquiry5() {
+      const vol = parseFloat(document.getElementById('rngVol').value);
+      const userAns = parseFloat(document.getElementById('ansMass').value);
+      const correctAns = (vol / 1000) * 0.1 * 0.5 * 461;
+      const fb = document.getElementById('fb5');
+      fb.style.display = 'block';
+
+      if (Math.abs(userAns - correctAns) < 0.05) {
+        fb.style.background = "#16a34a"; fb.innerText = `Benar! Massa endapan PbI₂ = ${correctAns.toFixed(3)} gram.`;
+      } else {
+        fb.style.background = "#be123c"; fb.innerText = `Belum tepat. Hasil perhitungan tepat: ${correctAns.toFixed(3)} gram.`;
+      }
+    }
+
+    // Inisialisasi awal pada Tahap 1
+    loadStage(1);
+  </script>
+</body>
+</html>
