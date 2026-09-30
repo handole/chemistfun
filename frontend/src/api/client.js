@@ -135,6 +135,15 @@ export const api = {
     getLab(materialUuid) {
       return request(`/content/materials/${materialUuid}/lab`)
     },
+    getLabByUuid(labUuid) {
+      return request(`/content/labs/${labUuid}`)
+    },
+    listLabs(status = null) {
+      const params = new URLSearchParams()
+      if (status) params.append('status', status)
+      const q = params.toString()
+      return request(`/content/labs${q ? `?${q}` : ''}`)
+    },
     upsertLab(materialUuid, data) {
       return request(`/content/materials/${materialUuid}/lab`, {
         method: 'PUT',
@@ -145,6 +154,30 @@ export const api = {
       return request('/content/labs/verify-inquiry', {
         method: 'POST',
         body: JSON.stringify(payload),
+      })
+    },
+    generateLabWithAI(prompt, materialUuid = null) {
+      return request('/content/labs/generate-ai', {
+        method: 'POST',
+        body: JSON.stringify({
+          teacher_prompt: prompt,
+          material_uuid: materialUuid,
+        }),
+      })
+    },
+    generateMaterialWithAI(topic, moduleId = null) {
+      return request('/content/materials/generate-ai', {
+        method: 'POST',
+        body: JSON.stringify({
+          topic,
+          module_id: moduleId,
+        }),
+      })
+    },
+    chatChemBot(question) {
+      return request('/content/chembot/chat', {
+        method: 'POST',
+        body: JSON.stringify({ question }),
       })
     },
   },
@@ -183,6 +216,39 @@ export const api = {
     listAttempts(quizId = null) {
       const qs = quizId ? `?quiz_id=${quizId}` : ''
       return request(`/assessment/attempts${qs}`)
+    },
+    getQuizByModule(moduleId) {
+      return request(`/assessment/quizzes/by-module/${moduleId}`)
+    },
+    getQuiz(quizUuid) {
+      return request(`/assessment/quizzes/${quizUuid}`)
+    },
+    listQuestionsStudent(quizUuid) {
+      return request(`/assessment/quizzes/${quizUuid}/questions/student-view`)
+    },
+    startAttempt(quizId, studentId = null) {
+      return request('/assessment/attempts/start', {
+        method: 'POST',
+        body: JSON.stringify({ quiz_id: quizId, student_id: studentId }),
+      })
+    },
+    saveAnswer(attemptId, questionId, selectedAnswer) {
+      return request('/assessment/answers', {
+        method: 'POST',
+        body: JSON.stringify({
+          attempt_id: attemptId,
+          question_id: questionId,
+          selected_answer: selectedAnswer,
+        }),
+      })
+    },
+    submitAttempt(attemptUuid) {
+      return request(`/assessment/attempts/${attemptUuid}/submit`, {
+        method: 'POST',
+      })
+    },
+    getAttempt(attemptUuid) {
+      return request(`/assessment/attempts/${attemptUuid}`)
     },
   }
 }

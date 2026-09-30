@@ -19,6 +19,12 @@ const loading = ref(false)
 const saving = ref(false)
 const saveSuccess = ref(false)
 
+// AI Lab Generator State
+const aiPromptInput = ref('')
+const isGeneratingAI = ref(false)
+const aiError = ref('')
+const aiSuccessMsg = ref('')
+
 // Virtual Lab Form State
 const labStatus = ref('draft')
 const aiPromptHistory = ref('')
@@ -137,6 +143,30 @@ const saveLabConfig = async () => {
   }
 }
 
+const handleGenerateLabAI = async () => {
+  if (!aiPromptInput.value.trim()) return
+  isGeneratingAI.value = true
+  aiError.value = ''
+  aiSuccessMsg.value = ''
+
+  try {
+    const res = await api.content.generateLabWithAI(
+      aiPromptInput.value.trim(),
+      selectedMaterial.value?.uuid
+    )
+    if (res && res.config_data) {
+      config.value = { ...config.value, ...res.config_data }
+      aiPromptHistory.value = res.ai_prompt_history || aiPromptInput.value
+      aiSuccessMsg.value = 'Parameter lab berhasil di-generate AI!'
+      setTimeout(() => (aiSuccessMsg.value = ''), 4000)
+    }
+  } catch (err) {
+    aiError.value = err.message || 'Gagal generate lab dengan AI.'
+  } finally {
+    isGeneratingAI.value = false
+  }
+}
+
 const toggleTitration = () => {
   isSimulating.value = !isSimulating.value
   if (isSimulating.value) {
@@ -249,6 +279,36 @@ onMounted(() => {
             <option value="ready">🟢 Ready (Siap Pakai)</option>
             <option value="draft">🟡 Draft (Penyusunan)</option>
           </select>
+        </div>
+
+        <!-- AI Generator Assistant Box -->
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Sparkles class="w-3.5 h-3.5 text-chemist-primary" />
+              <span>Generate Parameter Simulasi</span>
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <input 
+              v-model="aiPromptInput"
+              type="text"
+              placeholder="Ketik topik simulasi, cth: Titrasi cuka dapur dengan NaOH 0.1M..."
+              @keyup.enter="handleGenerateLabAI"
+              class="flex-1 bg-white border border-slate-200 focus:border-chemist-primary rounded-xl px-3 py-2 text-xs text-slate-800 outline-none"
+            />
+            <button 
+              @click="handleGenerateLabAI"
+              :disabled="isGeneratingAI || !aiPromptInput.trim()"
+              class="bg-chemist-dark hover:bg-slate-900 disabled:opacity-50 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs shrink-0"
+            >
+              <RefreshCw v-if="isGeneratingAI" class="w-3.5 h-3.5 animate-spin" />
+              <Sparkles v-else class="w-3.5 h-3.5 text-sky-400" />
+              <span>{{ isGeneratingAI ? 'Memproses...' : 'Generate' }}</span>
+            </button>
+          </div>
+          <p v-if="aiSuccessMsg" class="text-[11px] text-emerald-600 font-semibold">{{ aiSuccessMsg }}</p>
+          <p v-if="aiError" class="text-[11px] text-rose-600 font-semibold">{{ aiError }}</p>
         </div>
 
         <div class="space-y-4 text-xs">

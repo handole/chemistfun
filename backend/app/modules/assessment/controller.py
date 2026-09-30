@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.assessment.models import (
     EvaluationMetric,
@@ -29,32 +29,35 @@ class AssessmentController:
     # =========================================================================
 
     @staticmethod
-    def get_metric_by_id(db: Session, metric_id: int) -> Optional[EvaluationMetric]:
-        return db.scalar(select(EvaluationMetric).where(EvaluationMetric.id == metric_id))
+    async def get_metric_by_id(db: AsyncSession, metric_id: int) -> Optional[EvaluationMetric]:
+        result = await db.execute(select(EvaluationMetric).where(EvaluationMetric.id == metric_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_metric_by_uuid(db: Session, metric_uuid: UUID) -> Optional[EvaluationMetric]:
-        return db.scalar(select(EvaluationMetric).where(EvaluationMetric.uuid == metric_uuid))
+    async def get_metric_by_uuid(db: AsyncSession, metric_uuid: UUID) -> Optional[EvaluationMetric]:
+        result = await db.execute(select(EvaluationMetric).where(EvaluationMetric.uuid == metric_uuid))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_metrics_by_module(db: Session, module_id: int) -> List[EvaluationMetric]:
+    async def get_metrics_by_module(db: AsyncSession, module_id: int) -> List[EvaluationMetric]:
         query = select(EvaluationMetric).where(EvaluationMetric.module_id == module_id).order_by(EvaluationMetric.id.asc())
-        return list(db.scalars(query).all())
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     @staticmethod
-    def create_metric(db: Session, obj_in: EvaluationMetricCreate) -> EvaluationMetric:
+    async def create_metric(db: AsyncSession, obj_in: EvaluationMetricCreate) -> EvaluationMetric:
         db_obj = EvaluationMetric(
             module_id=obj_in.module_id,
             metric_name=obj_in.metric_name,
         )
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def update_metric(
-        db: Session,
+    async def update_metric(
+        db: AsyncSession,
         db_obj: EvaluationMetric,
         obj_in: Union[EvaluationMetricUpdate, Dict[str, Any]],
     ) -> EvaluationMetric:
@@ -68,16 +71,16 @@ class AssessmentController:
                 setattr(db_obj, field, value)
 
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def delete_metric(db: Session, metric_id: int) -> Optional[EvaluationMetric]:
-        metric_obj = AssessmentController.get_metric_by_id(db, metric_id=metric_id)
+    async def delete_metric(db: AsyncSession, metric_id: int) -> Optional[EvaluationMetric]:
+        metric_obj = await AssessmentController.get_metric_by_id(db, metric_id=metric_id)
         if metric_obj:
-            db.delete(metric_obj)
-            db.commit()
+            await db.delete(metric_obj)
+            await db.commit()
         return metric_obj
 
     # =========================================================================
@@ -85,19 +88,22 @@ class AssessmentController:
     # =========================================================================
 
     @staticmethod
-    def get_quiz_by_id(db: Session, quiz_id: int) -> Optional[Quiz]:
-        return db.scalar(select(Quiz).where(Quiz.id == quiz_id))
+    async def get_quiz_by_id(db: AsyncSession, quiz_id: int) -> Optional[Quiz]:
+        result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_quiz_by_uuid(db: Session, quiz_uuid: UUID) -> Optional[Quiz]:
-        return db.scalar(select(Quiz).where(Quiz.uuid == quiz_uuid))
+    async def get_quiz_by_uuid(db: AsyncSession, quiz_uuid: UUID) -> Optional[Quiz]:
+        result = await db.execute(select(Quiz).where(Quiz.uuid == quiz_uuid))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_quiz_by_module(db: Session, module_id: int) -> Optional[Quiz]:
-        return db.scalar(select(Quiz).where(Quiz.module_id == module_id))
+    async def get_quiz_by_module(db: AsyncSession, module_id: int) -> Optional[Quiz]:
+        result = await db.execute(select(Quiz).where(Quiz.module_id == module_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def create_quiz(db: Session, obj_in: QuizCreate) -> Quiz:
+    async def create_quiz(db: AsyncSession, obj_in: QuizCreate) -> Quiz:
         db_obj = Quiz(
             module_id=obj_in.module_id,
             title=obj_in.title,
@@ -105,13 +111,13 @@ class AssessmentController:
             is_active=obj_in.is_active,
         )
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def update_quiz(
-        db: Session,
+    async def update_quiz(
+        db: AsyncSession,
         db_obj: Quiz,
         obj_in: Union[QuizUpdate, Dict[str, Any]],
     ) -> Quiz:
@@ -125,16 +131,16 @@ class AssessmentController:
                 setattr(db_obj, field, value)
 
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def delete_quiz(db: Session, quiz_id: int) -> Optional[Quiz]:
-        quiz_obj = AssessmentController.get_quiz_by_id(db, quiz_id=quiz_id)
+    async def delete_quiz(db: AsyncSession, quiz_id: int) -> Optional[Quiz]:
+        quiz_obj = await AssessmentController.get_quiz_by_id(db, quiz_id=quiz_id)
         if quiz_obj:
-            db.delete(quiz_obj)
-            db.commit()
+            await db.delete(quiz_obj)
+            await db.commit()
         return quiz_obj
 
     # =========================================================================
@@ -142,20 +148,23 @@ class AssessmentController:
     # =========================================================================
 
     @staticmethod
-    def get_question_by_id(db: Session, question_id: int) -> Optional[Question]:
-        return db.scalar(select(Question).where(Question.id == question_id))
+    async def get_question_by_id(db: AsyncSession, question_id: int) -> Optional[Question]:
+        result = await db.execute(select(Question).where(Question.id == question_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_question_by_uuid(db: Session, question_uuid: UUID) -> Optional[Question]:
-        return db.scalar(select(Question).where(Question.uuid == question_uuid))
+    async def get_question_by_uuid(db: AsyncSession, question_uuid: UUID) -> Optional[Question]:
+        result = await db.execute(select(Question).where(Question.uuid == question_uuid))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_questions_by_quiz(db: Session, quiz_id: int) -> List[Question]:
+    async def get_questions_by_quiz(db: AsyncSession, quiz_id: int) -> List[Question]:
         query = select(Question).where(Question.quiz_id == quiz_id).order_by(Question.id.asc())
-        return list(db.scalars(query).all())
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     @staticmethod
-    def create_question(db: Session, obj_in: QuestionCreate) -> Question:
+    async def create_question(db: AsyncSession, obj_in: QuestionCreate) -> Question:
         db_obj = Question(
             quiz_id=obj_in.quiz_id,
             metric_id=obj_in.metric_id,
@@ -166,13 +175,13 @@ class AssessmentController:
             weight_score=obj_in.weight_score,
         )
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def update_question(
-        db: Session,
+    async def update_question(
+        db: AsyncSession,
         db_obj: Question,
         obj_in: Union[QuestionUpdate, Dict[str, Any]],
     ) -> Question:
@@ -189,16 +198,16 @@ class AssessmentController:
                 setattr(db_obj, field, value)
 
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def delete_question(db: Session, question_id: int) -> Optional[Question]:
-        question_obj = AssessmentController.get_question_by_id(db, question_id=question_id)
+    async def delete_question(db: AsyncSession, question_id: int) -> Optional[Question]:
+        question_obj = await AssessmentController.get_question_by_id(db, question_id=question_id)
         if question_obj:
-            db.delete(question_obj)
-            db.commit()
+            await db.delete(question_obj)
+            await db.commit()
         return question_obj
 
     # =========================================================================
@@ -206,28 +215,30 @@ class AssessmentController:
     # =========================================================================
 
     @staticmethod
-    def start_attempt(db: Session, student_id: int, quiz_id: int) -> StudentQuizAttempt:
+    async def start_attempt(db: AsyncSession, student_id: int, quiz_id: int) -> StudentQuizAttempt:
         attempt = StudentQuizAttempt(
             student_id=student_id,
             quiz_id=quiz_id,
             started_at=datetime.now(timezone.utc),
         )
         db.add(attempt)
-        db.commit()
-        db.refresh(attempt)
+        await db.commit()
+        await db.refresh(attempt)
         return attempt
 
     @staticmethod
-    def get_attempt_by_id(db: Session, attempt_id: int) -> Optional[StudentQuizAttempt]:
-        return db.scalar(select(StudentQuizAttempt).where(StudentQuizAttempt.id == attempt_id))
+    async def get_attempt_by_id(db: AsyncSession, attempt_id: int) -> Optional[StudentQuizAttempt]:
+        result = await db.execute(select(StudentQuizAttempt).where(StudentQuizAttempt.id == attempt_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_attempt_by_uuid(db: Session, attempt_uuid: UUID) -> Optional[StudentQuizAttempt]:
-        return db.scalar(select(StudentQuizAttempt).where(StudentQuizAttempt.uuid == attempt_uuid))
+    async def get_attempt_by_uuid(db: AsyncSession, attempt_uuid: UUID) -> Optional[StudentQuizAttempt]:
+        result = await db.execute(select(StudentQuizAttempt).where(StudentQuizAttempt.uuid == attempt_uuid))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_student_attempts(
-        db: Session,
+    async def get_student_attempts(
+        db: AsyncSession,
         student_id: int,
         quiz_id: Optional[int] = None,
     ) -> List[StudentQuizAttempt]:
@@ -235,11 +246,26 @@ class AssessmentController:
         if quiz_id is not None:
             query = query.where(StudentQuizAttempt.quiz_id == quiz_id)
         query = query.order_by(StudentQuizAttempt.started_at.desc())
-        return list(db.scalars(query).all())
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     @staticmethod
-    def save_student_answer(
-        db: Session,
+    async def get_all_attempts(
+        db: AsyncSession,
+        quiz_id: Optional[int] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> List[StudentQuizAttempt]:
+        query = select(StudentQuizAttempt)
+        if quiz_id is not None:
+            query = query.where(StudentQuizAttempt.quiz_id == quiz_id)
+        query = query.order_by(StudentQuizAttempt.started_at.desc()).offset(skip).limit(limit)
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def save_student_answer(
+        db: AsyncSession,
         attempt_id: int,
         question_id: int,
         selected_answer: str,
@@ -248,24 +274,25 @@ class AssessmentController:
         selected_normalized = selected_answer.strip().upper()
 
         # Check correctness against question
-        question = AssessmentController.get_question_by_id(db, question_id=question_id)
+        question = await AssessmentController.get_question_by_id(db, question_id=question_id)
         is_correct = False
         if question:
             is_correct = (selected_normalized == question.correct_answer.strip().upper())
 
         # Check if answer already recorded for this question in attempt
-        existing_answer = db.scalar(
+        result = await db.execute(
             select(StudentAnswer).where(
                 StudentAnswer.attempt_id == attempt_id,
                 StudentAnswer.question_id == question_id,
             )
         )
+        existing_answer = result.scalar_one_or_none()
         if existing_answer:
             existing_answer.selected_answer = selected_normalized
             existing_answer.is_correct = is_correct
             db.add(existing_answer)
-            db.commit()
-            db.refresh(existing_answer)
+            await db.commit()
+            await db.refresh(existing_answer)
             return existing_answer
 
         new_answer = StudentAnswer(
@@ -275,31 +302,32 @@ class AssessmentController:
             is_correct=is_correct,
         )
         db.add(new_answer)
-        db.commit()
-        db.refresh(new_answer)
+        await db.commit()
+        await db.refresh(new_answer)
         return new_answer
 
     @staticmethod
-    def get_attempt_answers(db: Session, attempt_id: int) -> List[StudentAnswer]:
+    async def get_attempt_answers(db: AsyncSession, attempt_id: int) -> List[StudentAnswer]:
         query = select(StudentAnswer).where(StudentAnswer.attempt_id == attempt_id)
-        return list(db.scalars(query).all())
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     @staticmethod
-    def submit_attempt(db: Session, attempt_id: int) -> Optional[StudentQuizAttempt]:
+    async def submit_attempt(db: AsyncSession, attempt_id: int) -> Optional[StudentQuizAttempt]:
         """
         Finalize quiz attempt:
         - Evaluates all answers.
         - Calculates total weighted score.
         - Aggregates score per evaluation_metric for the Radar Chart.
         """
-        attempt = AssessmentController.get_attempt_by_id(db, attempt_id=attempt_id)
+        attempt = await AssessmentController.get_attempt_by_id(db, attempt_id=attempt_id)
         if not attempt:
             return None
 
         # Fetch all questions for this quiz
-        questions = AssessmentController.get_questions_by_quiz(db, quiz_id=attempt.quiz_id)
+        questions = await AssessmentController.get_questions_by_quiz(db, quiz_id=attempt.quiz_id)
         # Fetch all recorded answers for this attempt
-        answers = AssessmentController.get_attempt_answers(db, attempt_id=attempt_id)
+        answers = await AssessmentController.get_attempt_answers(db, attempt_id=attempt_id)
         answer_map = {ans.question_id: ans for ans in answers}
 
         # Track metrics for radar chart: metric_id -> stats
@@ -339,7 +367,7 @@ class AssessmentController:
         radar_metrics = []
         for m_id, stats in metric_stats.items():
             if m_id is not None:
-                metric_obj = AssessmentController.get_metric_by_id(db, metric_id=m_id)
+                metric_obj = await AssessmentController.get_metric_by_id(db, metric_id=m_id)
                 metric_name = metric_obj.metric_name if metric_obj else f"Metrik #{m_id}"
             else:
                 metric_name = "Umum / Tanpa Metrik"
@@ -374,12 +402,11 @@ class AssessmentController:
         attempt.radar_chart_data = radar_data
 
         db.add(attempt)
-        db.commit()
-        db.refresh(attempt)
+        await db.commit()
+        await db.refresh(attempt)
         return attempt
 
 
 assessment_controller = AssessmentController()
 
 __all__ = ["AssessmentController", "assessment_controller"]
-

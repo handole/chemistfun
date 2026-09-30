@@ -34,6 +34,11 @@ const materialForm = ref({
 })
 const isEditingMaterial = ref(false)
 
+// AI Material Generator State
+const aiMaterialTopic = ref('')
+const isGeneratingMaterialAI = ref(false)
+const aiMaterialError = ref('')
+
 const loadClasses = async () => {
   loadingClasses.value = true
   try {
@@ -121,6 +126,8 @@ const handleDeleteModule = async (mod) => {
 // Material Actions
 const openCreateMaterial = () => {
   isEditingMaterial.value = false
+  aiMaterialTopic.value = ''
+  aiMaterialError.value = ''
   materialForm.value = {
     uuid: null,
     title: '',
@@ -129,6 +136,27 @@ const openCreateMaterial = () => {
     is_published: true
   }
   showMaterialModal.value = true
+}
+
+const handleGenerateMaterialAI = async () => {
+  if (!aiMaterialTopic.value.trim()) return
+  isGeneratingMaterialAI.value = true
+  aiMaterialError.value = ''
+
+  try {
+    const res = await api.content.generateMaterialWithAI(
+      aiMaterialTopic.value.trim(),
+      selectedModule.value?.id
+    )
+    if (res) {
+      if (res.title) materialForm.value.title = res.title
+      if (res.content_html) materialForm.value.content_html = res.content_html
+    }
+  } catch (err) {
+    aiMaterialError.value = err.message || 'Gagal generate materi dengan AI.'
+  } finally {
+    isGeneratingMaterialAI.value = false
+  }
 }
 
 const openEditMaterial = (mat) => {
@@ -422,6 +450,35 @@ onMounted(() => {
         <h3 class="text-base font-bold text-slate-900">
           {{ isEditingMaterial ? 'Edit Materi Pembelajaran' : 'Tambah Materi Baru' }}
         </h3>
+
+        <!-- AI Generator Assistant for Material Content -->
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Sparkles class="w-3.5 h-3.5 text-chemist-primary" />
+              <span>Generate Draf Materi</span>
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <input 
+              v-model="aiMaterialTopic"
+              type="text"
+              placeholder="Ketik topik materi, cth: Konsep Mol dan Massa Molar..."
+              @keyup.enter="handleGenerateMaterialAI"
+              class="flex-1 bg-white border border-slate-200 focus:border-chemist-primary rounded-xl px-3 py-2 text-xs text-slate-800 outline-none"
+            />
+            <button 
+              @click="handleGenerateMaterialAI"
+              :disabled="isGeneratingMaterialAI || !aiMaterialTopic.trim()"
+              class="bg-chemist-dark hover:bg-slate-900 disabled:opacity-50 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs shrink-0"
+            >
+              <RefreshCw v-if="isGeneratingMaterialAI" class="w-3.5 h-3.5 animate-spin" />
+              <Sparkles v-else class="w-3.5 h-3.5 text-sky-400" />
+              <span>{{ isGeneratingMaterialAI ? 'Memproses...' : 'Generate' }}</span>
+            </button>
+          </div>
+          <p v-if="aiMaterialError" class="text-[11px] text-rose-600 font-semibold">{{ aiMaterialError }}</p>
+        </div>
 
         <div class="space-y-3 text-sm">
           <div>

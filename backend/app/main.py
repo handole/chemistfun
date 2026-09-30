@@ -15,9 +15,11 @@ from app.modules.assessment.router import router as assessment_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure database tables exist upon startup in development
-    Base.metadata.create_all(bind=engine)
+    # Ensure database tables exist upon startup asynchronously in development
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
+    await engine.dispose()
 
 
 app = FastAPI(
@@ -47,7 +49,7 @@ app.include_router(assessment_router, prefix=API_PREFIX)
 
 
 @app.get("/", tags=["Root"])
-def read_root():
+async def read_root():
     return {
         "message": "Welcome to ChemistFun API",
         "status": "online",
@@ -56,7 +58,7 @@ def read_root():
 
 
 @app.get("/api/health", tags=["Health"])
-def health_check():
+async def health_check():
     return {
         "status": "healthy",
         "service": "chemistfun-backend",

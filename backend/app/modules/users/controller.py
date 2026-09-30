@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
 from app.modules.users.models import User, UserRole
@@ -11,20 +11,23 @@ from app.modules.users.schemas import UserCreate, UserUpdate
 
 class UserController:
     @staticmethod
-    def get_by_id(db: Session, user_id: int) -> Optional[User]:
-        return db.scalar(select(User).where(User.id == user_id))
+    async def get_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
+        result = await db.execute(select(User).where(User.id == user_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_by_uuid(db: Session, user_uuid: UUID) -> Optional[User]:
-        return db.scalar(select(User).where(User.uuid == user_uuid))
+    async def get_by_uuid(db: AsyncSession, user_uuid: UUID) -> Optional[User]:
+        result = await db.execute(select(User).where(User.uuid == user_uuid))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_by_email(db: Session, email: str) -> Optional[User]:
-        return db.scalar(select(User).where(User.email == email))
+    async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_multi(
-        db: Session,
+    async def get_multi(
+        db: AsyncSession,
         skip: int = 0,
         limit: int = 100,
         role: Optional[UserRole] = None,
@@ -33,10 +36,11 @@ class UserController:
         if role:
             query = query.where(User.role == role)
         query = query.offset(skip).limit(limit)
-        return list(db.scalars(query).all())
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     @staticmethod
-    def create(db: Session, obj_in: UserCreate) -> User:
+    async def create(db: AsyncSession, obj_in: UserCreate) -> User:
         db_obj = User(
             email=obj_in.email,
             password_hash=hash_password(obj_in.password),
@@ -44,13 +48,13 @@ class UserController:
             role=obj_in.role,
         )
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def update(
-        db: Session,
+    async def update(
+        db: AsyncSession,
         db_obj: User,
         obj_in: Union[UserUpdate, Dict[str, Any]],
     ) -> User:
@@ -68,21 +72,21 @@ class UserController:
                 setattr(db_obj, field, value)
 
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
     @staticmethod
-    def delete(db: Session, user_id: int) -> Optional[User]:
-        user = UserController.get_by_id(db, user_id=user_id)
+    async def delete(db: AsyncSession, user_id: int) -> Optional[User]:
+        user = await UserController.get_by_id(db, user_id=user_id)
         if user:
-            db.delete(user)
-            db.commit()
+            await db.delete(user)
+            await db.commit()
         return user
 
     @staticmethod
-    def authenticate(db: Session, email: str, password: str) -> Optional[User]:
-        user = UserController.get_by_email(db, email=email)
+    async def authenticate(db: AsyncSession, email: str, password: str) -> Optional[User]:
+        user = await UserController.get_by_email(db, email=email)
         if not user:
             return None
         if not verify_password(password, user.password_hash):
@@ -93,4 +97,3 @@ class UserController:
 user_controller = UserController()
 
 __all__ = ["UserController", "user_controller"]
-

@@ -1,26 +1,17 @@
-from typing import Callable, Generator
+from typing import Callable
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import SessionLocal
+from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.modules.users.controller import UserController
 from app.modules.users.models import User, UserRole
 
 # HTTP Bearer scheme for Swagger UI & API header authorization
 security_scheme = HTTPBearer(auto_error=True)
-
-
-def get_db() -> Generator[Session, None, None]:
-    """Dependency: Provide a database session per request."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def require_record(record, detail: str = "Record not found"):
@@ -30,9 +21,9 @@ def require_record(record, detail: str = "Record not found"):
     return record
 
 
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     """Validate Bearer JWT token and retrieve the current authenticated User."""
     token = credentials.credentials
@@ -50,13 +41,13 @@ def get_current_user(
         sub = payload.get("sub")
         if sub:
             try:
-                user = UserController.get_by_uuid(db, user_uuid=UUID(sub))
+                user = await UserController.get_by_uuid(db, user_uuid=UUID(sub))
             except Exception:
                 user = None
         else:
             user = None
     else:
-        user = UserController.get_by_id(db, user_id=int(user_id))
+        user = await UserController.get_by_id(db, user_id=int(user_id))
 
     if not user:
         raise HTTPException(
@@ -70,7 +61,7 @@ def get_current_user(
 
 def require_role(*allowed_roles: UserRole) -> Callable[..., User]:
     """Factory dependency: Ensure the authenticated user possesses one of the allowed roles."""
-    def role_dependency(current_user: User = Depends(get_current_user)) -> User:
+    async def role_dependency(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in allowed_roles:
             roles_str = ", ".join(r.value for r in allowed_roles)
             raise HTTPException(

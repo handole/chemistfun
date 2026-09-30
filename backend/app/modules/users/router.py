@@ -2,7 +2,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.users.controller import UserController
 from app.modules.users.models import User, UserRole
@@ -22,14 +22,14 @@ router = APIRouter(prefix="/users", tags=["Users"])
     response_model=List[UserResponse],
     summary="List all users (Teacher only)",
 )
-def list_users(
+async def list_users(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     role: Optional[UserRole] = Query(default=None, description="Filter by role: teacher or student"),
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    return UserController.get_multi(db, skip=skip, limit=limit, role=role)
+    return await UserController.get_multi(db, skip=skip, limit=limit, role=role)
 
 
 @router.post(
@@ -38,18 +38,18 @@ def list_users(
     status_code=status.HTTP_201_CREATED,
     summary="Create a new user (Teacher only, otherwise use /auth/register)",
 )
-def create_user(
+async def create_user(
     payload: UserCreate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    existing = UserController.get_by_email(db, email=payload.email)
+    existing = await UserController.get_by_email(db, email=payload.email)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered.",
         )
-    return UserController.create(db, obj_in=payload)
+    return await UserController.create(db, obj_in=payload)
 
 
 @router.get(
@@ -57,13 +57,13 @@ def create_user(
     response_model=UserResponse,
     summary="Get user by UUID (Authenticated)",
 )
-def get_user(
+async def get_user(
     user_uuid: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     return require_record(
-        UserController.get_by_uuid(db, user_uuid=user_uuid),
+        await UserController.get_by_uuid(db, user_uuid=user_uuid),
         detail=f"User '{user_uuid}' not found.",
     )
 
@@ -73,14 +73,14 @@ def get_user(
     response_model=UserResponse,
     summary="Update user by UUID (Self or Teacher)",
 )
-def update_user(
+async def update_user(
     user_uuid: UUID,
     payload: UserUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     user = require_record(
-        UserController.get_by_uuid(db, user_uuid=user_uuid),
+        await UserController.get_by_uuid(db, user_uuid=user_uuid),
         detail=f"User '{user_uuid}' not found.",
     )
     # Users can only update their own profile unless they are a teacher
@@ -92,7 +92,7 @@ def update_user(
 
     # Check email uniqueness if being modified
     if payload.email and payload.email != user.email:
-        if UserController.get_by_email(db, email=payload.email):
+        if await UserController.get_by_email(db, email=payload.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already in use by another account.",
@@ -105,7 +105,7 @@ def update_user(
             detail="Only teachers can modify account roles.",
         )
 
-    return UserController.update(db, db_obj=user, obj_in=payload)
+    return await UserController.update(db, db_obj=user, obj_in=payload)
 
 
 @router.delete(
@@ -113,18 +113,19 @@ def update_user(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete user by UUID (Teacher only)",
 )
-def delete_user(
+async def delete_user(
     user_uuid: UUID,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     user = require_record(
-        UserController.get_by_uuid(db, user_uuid=user_uuid),
+        await UserController.get_by_uuid(db, user_uuid=user_uuid),
         detail=f"User '{user_uuid}' not found.",
     )
+    # Prevent self-deletion
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete your own account via this endpoint.",
+            detail="You cannot delete your own account.",
         )
-    UserController.delete(db, user_id=user.id)
+    await UserController.delete(db, user_id=user.id)

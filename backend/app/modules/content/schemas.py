@@ -96,6 +96,35 @@ class VerifyInquiryResponse(BaseModel):
     explanation: str
 
 
+class AILabGenerateRequest(BaseModel):
+    teacher_prompt: str = Field(..., min_length=3, description="Prompt guru ke AI")
+    material_uuid: Optional[UUID] = Field(None, description="UUID materi kimia terkait")
+
+
+class AILabGenerateResponse(BaseModel):
+    config_data: Dict[str, Any]
+    ai_prompt_history: str
+
+
+class AIMaterialGenerateRequest(BaseModel):
+    topic: str = Field(..., min_length=2, description="Topik sub-materi yang ingin dibuat")
+    module_id: Optional[int] = Field(None, description="ID modul terkait")
+
+
+class AIMaterialGenerateResponse(BaseModel):
+    title: str
+    content_html: str
+
+
+class AIChemBotRequest(BaseModel):
+    question: str = Field(..., min_length=2, description="Pertanyaan kimia siswa")
+
+
+class AIChemBotResponse(BaseModel):
+    answer: str
+
+
+
 __all__ = [
     "ModuleBase",
     "ModuleCreate",
@@ -111,5 +140,11 @@ __all__ = [
     "VirtualLabResponse",
     "VerifyInquiryRequest",
     "VerifyInquiryResponse",
+    "AILabGenerateRequest",
+    "AILabGenerateResponse",
+    "AIMaterialGenerateRequest",
+    "AIMaterialGenerateResponse",
+    "AIChemBotRequest",
+    "AIChemBotResponse",
 ]
 

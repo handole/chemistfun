@@ -1,10 +1,11 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.content.controller import ContentController
+from app.modules.content.models import VirtualLabStatus
 from app.modules.content.schemas import (
     MaterialCreate,
     MaterialResponse,
@@ -17,8 +18,15 @@ from app.modules.content.schemas import (
     VirtualLabUpdate,
     VerifyInquiryRequest,
     VerifyInquiryResponse,
+    AILabGenerateRequest,
+    AILabGenerateResponse,
+    AIMaterialGenerateRequest,
+    AIMaterialGenerateResponse,
+    AIChemBotRequest,
+    AIChemBotResponse,
 )
 from app.modules.content.chemistry_engine import ChemistryEngine
+from app.services.ai_generator import AIGenerator
 from app.modules.users.models import User, UserRole
 from app.utils.dependencies import (
     get_current_user,
@@ -30,49 +38,49 @@ from app.utils.dependencies import (
 router = APIRouter(prefix="/content", tags=["Content"])
 
 
-# =========================================================================
-# Modules
-# =========================================================================
+# =============================================================================
+# Modules Endpoints
+# =============================================================================
 
 @router.get(
     "/modules",
     response_model=List[ModuleResponse],
-    summary="List modules by class ID (Authenticated)",
+    summary="List modules by class ID",
 )
-def list_modules(
-    class_id: int = Query(..., description="Filter by class ID"),
+async def list_modules(
+    class_id: int = Query(..., description="Parent class ID"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    return ContentController.get_modules_by_class(db, class_id=class_id)
+    return await ContentController.get_modules_by_class(db, class_id=class_id)
 
 
 @router.post(
     "/modules",
     response_model=ModuleResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new module (Teacher only)",
+    summary="Create a new chapter/module (Teacher only)",
 )
-def create_module(
+async def create_module(
     payload: ModuleCreate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    return ContentController.create_module(db, obj_in=payload)
+    return await ContentController.create_module(db, obj_in=payload)
 
 
 @router.get(
     "/modules/{module_uuid}",
     response_model=ModuleResponse,
-    summary="Get module by UUID (Authenticated)",
+    summary="Get module by UUID",
 )
-def get_module(
+async def get_module(
     module_uuid: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     return require_record(
-        ContentController.get_module_by_uuid(db, module_uuid=module_uuid),
+        await ContentController.get_module_by_uuid(db, module_uuid=module_uuid),
         detail=f"Module '{module_uuid}' not found.",
     )
 
@@ -82,17 +90,17 @@ def get_module(
     response_model=ModuleResponse,
     summary="Update module by UUID (Teacher only)",
 )
-def update_module(
+async def update_module(
     module_uuid: UUID,
     payload: ModuleUpdate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     module = require_record(
-        ContentController.get_module_by_uuid(db, module_uuid=module_uuid),
+        await ContentController.get_module_by_uuid(db, module_uuid=module_uuid),
         detail=f"Module '{module_uuid}' not found.",
     )
-    return ContentController.update_module(db, db_obj=module, obj_in=payload)
+    return await ContentController.update_module(db, db_obj=module, obj_in=payload)
 
 
 @router.delete(
@@ -100,37 +108,36 @@ def update_module(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete module by UUID (Teacher only)",
 )
-def delete_module(
+async def delete_module(
     module_uuid: UUID,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     module = require_record(
-        ContentController.get_module_by_uuid(db, module_uuid=module_uuid),
+        await ContentController.get_module_by_uuid(db, module_uuid=module_uuid),
         detail=f"Module '{module_uuid}' not found.",
     )
-    ContentController.delete_module(db, module_id=module.id)
+    await ContentController.delete_module(db, module_id=module.id)
 
 
-# =========================================================================
-# Materials
-# =========================================================================
+# =============================================================================
+# Materials Endpoints
+# =============================================================================
 
 @router.get(
     "/materials",
     response_model=List[MaterialResponse],
-    summary="List materials by module ID (Students see published only)",
+    summary="List materials by module ID",
 )
-def list_materials(
-    module_id: int = Query(..., description="Filter by module ID"),
-    published_only: bool = Query(default=False, description="Explicit published-only filter"),
+async def list_materials(
+    module_id: int = Query(..., description="Parent module ID"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    # Enforce published_only=True for students
-    effective_published_only = published_only or (current_user.role == UserRole.STUDENT)
-    return ContentController.get_materials_by_module(
-        db, module_id=module_id, published_only=effective_published_only
+    # Students can only view published materials
+    published_only = (current_user.role == UserRole.STUDENT)
+    return await ContentController.get_materials_by_module(
+        db, module_id=module_id, published_only=published_only
     )
 
 
@@ -138,35 +145,34 @@ def list_materials(
     "/materials",
     response_model=MaterialResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new material (Teacher only)",
+    summary="Create a new material item (Teacher only)",
 )
-def create_material(
+async def create_material(
     payload: MaterialCreate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    return ContentController.create_material(db, obj_in=payload)
+    return await ContentController.create_material(db, obj_in=payload)
 
 
 @router.get(
     "/materials/{material_uuid}",
     response_model=MaterialResponse,
-    summary="Get material by UUID (Authenticated)",
+    summary="Get material by UUID",
 )
-def get_material(
+async def get_material(
     material_uuid: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     material = require_record(
-        ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
+        await ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
         detail=f"Material '{material_uuid}' not found.",
     )
-    # Students cannot view unpublished drafts
     if current_user.role == UserRole.STUDENT and not material.is_published:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Material is not published yet.",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This material is currently in draft mode.",
         )
     return material
 
@@ -176,17 +182,17 @@ def get_material(
     response_model=MaterialResponse,
     summary="Update material by UUID (Teacher only)",
 )
-def update_material(
+async def update_material(
     material_uuid: UUID,
     payload: MaterialUpdate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     material = require_record(
-        ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
+        await ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
         detail=f"Material '{material_uuid}' not found.",
     )
-    return ContentController.update_material(db, db_obj=material, obj_in=payload)
+    return await ContentController.update_material(db, db_obj=material, obj_in=payload)
 
 
 @router.delete(
@@ -194,67 +200,100 @@ def update_material(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete material by UUID (Teacher only)",
 )
-def delete_material(
+async def delete_material(
     material_uuid: UUID,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     material = require_record(
-        ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
+        await ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
         detail=f"Material '{material_uuid}' not found.",
     )
-    ContentController.delete_material(db, material_id=material.id)
+    await ContentController.delete_material(db, material_id=material.id)
 
 
-# =========================================================================
-# Virtual Labs  (1-to-1 with Material)
-# =========================================================================
+# =============================================================================
+# Virtual Lab Endpoints (1-to-1 attached to Material)
+# =============================================================================
+
+@router.get(
+    "/labs",
+    response_model=List[VirtualLabResponse],
+    summary="List all virtual lab configurations",
+)
+async def list_virtual_labs(
+    status: Optional[VirtualLabStatus] = None,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await ContentController.list_virtual_labs(
+        db, skip=skip, limit=limit, status=status
+    )
+
+
+@router.get(
+    "/labs/{lab_uuid}",
+    response_model=VirtualLabResponse,
+    summary="Get virtual lab configuration by its own UUID",
+)
+async def get_virtual_lab_by_uuid(
+    lab_uuid: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    lab = await ContentController.get_virtual_lab_by_uuid(db, lab_uuid=lab_uuid)
+    if not lab:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Virtual lab '{lab_uuid}' not found.",
+        )
+    return lab
+
 
 @router.get(
     "/materials/{material_uuid}/lab",
     response_model=VirtualLabResponse,
-    summary="Get virtual lab configuration for a material (Authenticated)",
+    summary="Get virtual lab configuration by material UUID",
 )
-def get_virtual_lab(
+async def get_virtual_lab(
     material_uuid: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     material = require_record(
-        ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
+        await ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
         detail=f"Material '{material_uuid}' not found.",
     )
-    if current_user.role == UserRole.STUDENT and not material.is_published:
+    lab = await ContentController.get_virtual_lab_by_material(db, material_id=material.id)
+    if not lab:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Material is not published yet.",
+            detail=f"No virtual lab configured for material '{material_uuid}'.",
         )
-    return require_record(
-        ContentController.get_virtual_lab_by_material(db, material_id=material.id),
-        detail=f"Virtual lab for material '{material_uuid}' not found.",
-    )
+    return lab
 
 
 @router.put(
     "/materials/{material_uuid}/lab",
     response_model=VirtualLabResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Create or update virtual lab configuration (Teacher only)",
+    summary="Create or update virtual lab configuration for a material (Teacher only)",
 )
-def upsert_virtual_lab(
+async def upsert_virtual_lab(
     material_uuid: UUID,
     payload: VirtualLabCreate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     material = require_record(
-        ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
+        await ContentController.get_material_by_uuid(db, material_uuid=material_uuid),
         detail=f"Material '{material_uuid}' not found.",
     )
     payload_data = payload.model_dump()
     payload_data["material_id"] = material.id
     updated_payload = VirtualLabCreate(**payload_data)
-    return ContentController.create_or_update_virtual_lab(db, obj_in=updated_payload)
+    return await ContentController.create_or_update_virtual_lab(db, obj_in=updated_payload)
 
 
 @router.patch(
@@ -262,17 +301,17 @@ def upsert_virtual_lab(
     response_model=VirtualLabResponse,
     summary="Update virtual lab by UUID (Teacher only)",
 )
-def update_virtual_lab(
+async def update_virtual_lab(
     lab_uuid: UUID,
     payload: VirtualLabUpdate,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     lab = require_record(
-        ContentController.get_virtual_lab_by_uuid(db, lab_uuid=lab_uuid),
+        await ContentController.get_virtual_lab_by_uuid(db, lab_uuid=lab_uuid),
         detail=f"Virtual lab '{lab_uuid}' not found.",
     )
-    return ContentController.update_virtual_lab(db, db_obj=lab, obj_in=payload)
+    return await ContentController.update_virtual_lab(db, db_obj=lab, obj_in=payload)
 
 
 @router.delete(
@@ -280,16 +319,16 @@ def update_virtual_lab(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete virtual lab by UUID (Teacher only)",
 )
-def delete_virtual_lab(
+async def delete_virtual_lab(
     lab_uuid: UUID,
     current_user: User = Depends(require_teacher),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     lab = require_record(
-        ContentController.get_virtual_lab_by_uuid(db, lab_uuid=lab_uuid),
+        await ContentController.get_virtual_lab_by_uuid(db, lab_uuid=lab_uuid),
         detail=f"Virtual lab '{lab_uuid}' not found.",
     )
-    ContentController.delete_virtual_lab(db, lab_id=lab.id)
+    await ContentController.delete_virtual_lab(db, lab_id=lab.id)
 
 
 @router.post(
@@ -297,7 +336,7 @@ def delete_virtual_lab(
     response_model=VerifyInquiryResponse,
     summary="Verify student answer for E-LKPD inquiry question",
 )
-def verify_inquiry_answer(
+async def verify_inquiry_answer(
     payload: VerifyInquiryRequest,
     current_user: User = Depends(get_current_user),
 ):
@@ -311,4 +350,94 @@ def verify_inquiry_answer(
         correct_value=correct_val,
         explanation=explanation,
     )
+
+
+# =============================================================================
+# AI Generation Endpoints (Powered by AIGenerator & PromptEngine)
+# =============================================================================
+
+@router.post(
+    "/labs/generate-ai",
+    response_model=AILabGenerateResponse,
+    summary="Generate virtual lab simulation parameters using AI (Teacher only)",
+)
+async def generate_virtual_lab_ai(
+    payload: AILabGenerateRequest,
+    current_user: User = Depends(require_teacher),
+    db: AsyncSession = Depends(get_db),
+):
+    mat_title = None
+    mat_content = None
+    if payload.material_uuid:
+        mat = await ContentController.get_material_by_uuid(db, material_uuid=payload.material_uuid)
+        if mat:
+            mat_title = mat.title
+            mat_content = mat.content_html
+
+    try:
+        config_data = await AIGenerator.generate_virtual_lab(
+            teacher_prompt=payload.teacher_prompt,
+            material_title=mat_title,
+            material_content=mat_content,
+        )
+        return AILabGenerateResponse(
+            config_data=config_data,
+            ai_prompt_history=payload.teacher_prompt,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal generate lab via AI: {str(exc)}",
+        )
+
+
+@router.post(
+    "/materials/generate-ai",
+    response_model=AIMaterialGenerateResponse,
+    summary="Generate chemistry learning material content using AI (Teacher only)",
+)
+async def generate_material_ai(
+    payload: AIMaterialGenerateRequest,
+    current_user: User = Depends(require_teacher),
+    db: AsyncSession = Depends(get_db),
+):
+    mod_title = None
+    if payload.module_id:
+        mod = await ContentController.get_module_by_id(db, module_id=payload.module_id)
+        if mod:
+            mod_title = mod.title
+
+    try:
+        data = await AIGenerator.generate_material(
+            topic=payload.topic,
+            module_title=mod_title,
+        )
+        return AIMaterialGenerateResponse(
+            title=data.get("title", payload.topic),
+            content_html=data.get("content_html", ""),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal generate materi via AI: {str(exc)}",
+        )
+
+
+@router.post(
+    "/chembot/chat",
+    response_model=AIChemBotResponse,
+    summary="Chat with Kimi AI Tutor (Students & Teachers)",
+)
+async def chat_with_chembot(
+    payload: AIChemBotRequest,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        answer = await AIGenerator.ask_chembot(payload.question)
+        return AIChemBotResponse(answer=answer)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Kimi mengalami kendala: {str(exc)}",
+        )
 

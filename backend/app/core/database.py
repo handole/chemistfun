@@ -1,16 +1,30 @@
 import os
-from typing import Generator
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
-DATABASE_URL = os.getenv(
+# Database URL support for asyncpg
+raw_url = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/chemistfun_db"
+    "postgresql://postgres:postgres@localhost:5432/chemistfun_db",
 )
 
-# Engine setup
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+if raw_url.startswith("postgresql://"):
+    ASYNC_DATABASE_URL = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif raw_url.startswith("postgres://"):
+    ASYNC_DATABASE_URL = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+else:
+    ASYNC_DATABASE_URL = raw_url
+
+# Async Engine setup
+engine = create_async_engine(ASYNC_DATABASE_URL, pool_pre_ping=True)
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
 
 
 class Base(DeclarativeBase):
@@ -18,11 +32,10 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db() -> Generator[Session, None, None]:
-    """Dependency for obtaining a database session."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for obtaining an async database session."""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()

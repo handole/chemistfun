@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
 from app.modules.auth.schemas import (
@@ -23,9 +23,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=status.HTTP_201_CREATED,
     summary="Register a new teacher or student account and receive a JWT token",
 )
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Register a new user account and immediately issue a JWT access token."""
-    existing = UserController.get_by_email(db, email=payload.email)
+    existing = await UserController.get_by_email(db, email=payload.email)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -38,7 +38,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         full_name=payload.full_name,
         role=payload.role,
     )
-    user = UserController.create(db, obj_in=user_in)
+    user = await UserController.create(db, obj_in=user_in)
 
     token_claims = {
         "sub": str(user.uuid),
@@ -60,9 +60,9 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     response_model=TokenResponse,
     summary="Authenticate with email and password to receive a JWT token",
 )
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     """Authenticate credentials and generate a signed JWT access token."""
-    user = UserController.authenticate(
+    user = await UserController.authenticate(
         db, email=payload.email, password=payload.password
     )
     if not user:
@@ -92,6 +92,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     response_model=UserProfileResponse,
     summary="Get current authenticated user profile",
 )
-def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(get_current_user)):
     """Return profile information of the currently authenticated user."""
     return current_user
