@@ -98,8 +98,18 @@ export const api = {
 
   // Content (Modules & Materials & Virtual Lab)
   content: {
-    listModules(classId) {
-      return request(`/content/modules?class_id=${classId}`)
+    listModules(classIdOrParams = null) {
+      if (!classIdOrParams) return request('/content/modules')
+      if (typeof classIdOrParams === 'object') {
+        const params = new URLSearchParams()
+        if (classIdOrParams.grade_level) params.append('grade_level', classIdOrParams.grade_level)
+        if (classIdOrParams.class_id) params.append('class_id', classIdOrParams.class_id)
+        return request(`/content/modules?${params.toString()}`)
+      }
+      return request(`/content/modules?class_id=${classIdOrParams}`)
+    },
+    listModulesByGrade(gradeLevel) {
+      return request(`/content/modules?grade_level=${gradeLevel}`)
     },
     createModule(data) {
       return request('/content/modules', {

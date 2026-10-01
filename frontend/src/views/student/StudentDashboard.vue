@@ -65,7 +65,10 @@ const loadStudentClasses = async () => {
 const selectClass = async (cls) => {
   selectedClass.value = cls
   try {
-    const mods = await api.content.listModules(cls.id)
+    const mods = await api.content.listModules({
+      grade_level: cls.grade_level || null,
+      class_id: cls.id
+    })
     modules.value = mods || []
     if (modules.value.length > 0) {
       await selectModule(modules.value[0])

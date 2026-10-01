@@ -9,13 +9,13 @@ const props = defineProps({
 
 const emit = defineEmits(['open-lab'])
 
-const classes = ref([])
-const selectedClassId = ref(null)
+// Level filter: 'X' | 'XI' | 'XII'
+const selectedGradeLevel = ref('X')
+const gradeLevels = ['X', 'XI', 'XII']
 const modules = ref([])
 const selectedModule = ref(null)
 const materials = ref([])
 
-const loadingClasses = ref(true)
 const loadingModules = ref(false)
 const loadingMaterials = ref(false)
 
@@ -39,26 +39,10 @@ const aiMaterialTopic = ref('')
 const isGeneratingMaterialAI = ref(false)
 const aiMaterialError = ref('')
 
-const loadClasses = async () => {
-  loadingClasses.value = true
-  try {
-    const res = await api.classes.list()
-    classes.value = res || []
-    if (classes.value.length > 0) {
-      selectedClassId.value = classes.value[0].id
-    }
-  } catch (err) {
-    console.error('Gagal mengambil kelas:', err)
-  } finally {
-    loadingClasses.value = false
-  }
-}
-
 const loadModules = async () => {
-  if (!selectedClassId.value) return
   loadingModules.value = true
   try {
-    const res = await api.content.listModules(selectedClassId.value)
+    const res = await api.content.listModulesByGrade(selectedGradeLevel.value)
     modules.value = res || []
     if (modules.value.length > 0) {
       selectModule(modules.value[0])
@@ -86,7 +70,7 @@ const selectModule = async (mod) => {
   }
 }
 
-watch(selectedClassId, () => {
+watch(selectedGradeLevel, () => {
   loadModules()
 })
 
@@ -95,7 +79,7 @@ const handleCreateModule = async () => {
   if (!newModuleTitle.value.trim()) return
   try {
     const res = await api.content.createModule({
-      class_id: selectedClassId.value,
+      grade_level: selectedGradeLevel.value,
       title: newModuleTitle.value.trim(),
       order_index: Number(newModuleOrder.value) || 1
     })
@@ -221,28 +205,35 @@ const handleDeleteMaterial = async (mat) => {
 }
 
 onMounted(() => {
-  loadClasses()
+  loadModules()
 })
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Header with Class Selector -->
+    <!-- Header with Grade Level Selector -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Kurikulum & Modul Pembelajaran</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1">Susun topik pembelajaran kimia, buat artikel materi teori, dan atur status publikasi untuk siswa.</p>
+        <p class="text-xs text-slate-500 font-medium mt-1">Susun materi kimia per tingkatan level (X, XI, XII) yang otomatis dibagikan ke seluruh sub-kelas terkait.</p>
       </div>
 
-      <!-- Class Select Box -->
-      <div class="flex items-center gap-2 self-start sm:self-auto">
-        <label class="text-xs font-bold text-slate-500 whitespace-nowrap">Pilih Kelas:</label>
-        <select 
-          v-model="selectedClassId"
-          class="bg-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none shadow-2xs"
+      <!-- Grade Level Switcher Pills -->
+      <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start sm:self-auto shadow-2xs">
+        <span class="text-[11px] font-bold text-slate-500 px-2 uppercase">Level:</span>
+        <button
+          v-for="lvl in gradeLevels"
+          :key="lvl"
+          @click="selectedGradeLevel = lvl"
+          :class="[
+            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all',
+            selectedGradeLevel === lvl
+              ? 'bg-chemist-dark text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          ]"
         >
-          <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
-        </select>
+          Kelas {{ lvl }}
+        </button>
       </div>
     </div>
 

@@ -4,6 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.classes.models import GradeLevel
+from app.modules.classes.controller import ClassController
 from app.modules.content.controller import ContentController
 from app.modules.content.models import VirtualLabStatus
 from app.modules.content.schemas import (
@@ -45,14 +47,22 @@ router = APIRouter(prefix="/content", tags=["Content"])
 @router.get(
     "/modules",
     response_model=List[ModuleResponse],
-    summary="List modules by class ID",
+    summary="List modules by grade level or class ID",
 )
 async def list_modules(
-    class_id: int = Query(..., description="Parent class ID"),
+    grade_level: Optional[GradeLevel] = Query(None, description="Grade level: X, XI, or XII"),
+    class_id: Optional[int] = Query(None, description="Parent class ID (auto-maps to class grade_level)"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await ContentController.get_modules_by_class(db, class_id=class_id)
+    if grade_level:
+        return await ContentController.get_modules_by_grade_level(db, grade_level=grade_level)
+    if class_id:
+        cls = await ClassController.get_by_id(db, class_id=class_id)
+        if cls:
+            return await ContentController.get_modules_by_grade_level(db, grade_level=cls.grade_level)
+        return []
+    return await ContentController.get_all_modules(db)
 
 
 @router.post(

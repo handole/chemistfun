@@ -3,12 +3,14 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.modules.classes.models import GradeLevel
 
 
 # --- Class Schemas ---
 
 class ClassBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255, description="Class name, e.g. Kimia Kelas XI")
+    name: str = Field(..., min_length=1, max_length=255, description="Class name, e.g. X-1 or XI-Kimia-A")
+    grade_level: GradeLevel = Field(default=GradeLevel.X, description="Grade level: X, XI, or XII")
 
 
 class ClassCreate(ClassBase):
@@ -18,6 +20,7 @@ class ClassCreate(ClassBase):
 
 class ClassUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
+    grade_level: Optional[GradeLevel] = None
     enrollment_code: Optional[str] = Field(None, max_length=50)
 
 

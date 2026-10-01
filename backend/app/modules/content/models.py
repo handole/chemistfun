@@ -7,9 +7,9 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.modules.classes.models import GradeLevel
 
 if TYPE_CHECKING:
-    from app.modules.classes.models import Class
     from app.modules.assessment.models import EvaluationMetric, Quiz
 
 
@@ -21,20 +21,24 @@ class VirtualLabStatus(str, enum.Enum):
 
 
 class Module(Base):
-    """Bab atau topik besar di dalam kelas."""
+    """Bab atau topik besar pembelajaran per tingkatan kelas (X, XI, XII)."""
     __tablename__ = "modules"
 
-    id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
-    uuid: Mapped[py_uuid.UUID] = mapped_column(UUID(as_uuid=True),default=py_uuid.uuid4,unique=True,nullable=False,index=True)
-    class_id: Mapped[int] = mapped_column(Integer,ForeignKey("classes.id", ondelete="CASCADE"),nullable=False,index=True)
-    title: Mapped[str] = mapped_column(String(255),nullable=False)
-    order_index: Mapped[int] = mapped_column(Integer,default=0,nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    uuid: Mapped[py_uuid.UUID] = mapped_column(UUID(as_uuid=True), default=py_uuid.uuid4, unique=True, nullable=False, index=True)
+    grade_level: Mapped[GradeLevel] = mapped_column(
+        Enum(GradeLevel, name="grade_level", native_enum=True, values_callable=lambda x: [e.value for e in x]),
+        default=GradeLevel.X,
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    order_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Relationships
-    class_: Mapped["Class"] = relationship("Class",back_populates="modules")
-    materials: Mapped[List["Material"]] = relationship("Material",back_populates="module",cascade="all, delete-orphan",order_by="Material.order_index")
-    evaluation_metrics: Mapped[List["EvaluationMetric"]] = relationship("EvaluationMetric",back_populates="module",cascade="all, delete-orphan")
-    quiz: Mapped[Optional["Quiz"]] = relationship("Quiz",back_populates="module",uselist=False,cascade="all, delete-orphan")
+    materials: Mapped[List["Material"]] = relationship("Material", back_populates="module", cascade="all, delete-orphan", order_by="Material.order_index")
+    evaluation_metrics: Mapped[List["EvaluationMetric"]] = relationship("EvaluationMetric", back_populates="module", cascade="all, delete-orphan")
+    quiz: Mapped[Optional["Quiz"]] = relationship("Quiz", back_populates="module", uselist=False, cascade="all, delete-orphan")
 
 
 class Material(Base):

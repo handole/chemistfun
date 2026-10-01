@@ -16,6 +16,7 @@ const loadingStudents = ref(false)
 const copiedCode = ref(null)
 
 const newClassName = ref('')
+const newClassGradeLevel = ref('X')
 const newClassCode = ref('')
 const createError = ref('')
 const isSubmitting = ref(false)
@@ -61,6 +62,7 @@ const handleCreateClass = async () => {
   try {
     const res = await api.classes.create({
       name: newClassName.value.trim(),
+      grade_level: newClassGradeLevel.value,
       enrollment_code: newClassCode.value.trim()
     })
     classes.value.push(res)
@@ -169,7 +171,10 @@ onMounted(() => {
 
           <div class="flex items-start justify-between gap-3">
             <div>
-              <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-chemist-primary rounded-md uppercase">Kimia</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-chemist-primary rounded-md uppercase">Kimia</span>
+                <span class="text-[10px] font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md uppercase">Kelas {{ cls.grade_level || 'X' }}</span>
+              </div>
               <h4 class="font-bold text-slate-900 text-base mt-1.5">{{ cls.name }}</h4>
             </div>
             <button 
@@ -282,13 +287,26 @@ onMounted(() => {
 
         <div class="space-y-4 text-sm">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Kelas</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Kelas / Sub-Kelas</label>
             <input 
               v-model="newClassName"
               type="text" 
-              placeholder="Contoh: Kimia X IPA 1 - SMAN 1" 
+              placeholder="Contoh: X-1, X-2, atau XI-IPA-A" 
               class="w-full bg-slate-50 focus:bg-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary focus:ring-2 focus:ring-chemist-primary/20 outline-none"
             />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Tingkatan Level Kelas</label>
+            <select
+              v-model="newClassGradeLevel"
+              class="w-full bg-slate-50 focus:bg-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none font-semibold text-slate-800"
+            >
+              <option value="X">Kelas X (Sepuluh)</option>
+              <option value="XI">Kelas XI (Sebelas)</option>
+              <option value="XII">Kelas XII (Dua Belas)</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Kelas ini otomatis mewarisi seluruh materi kurikulum level tersebut.</p>
           </div>
 
           <div>
