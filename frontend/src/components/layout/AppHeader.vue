@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { Search, Bell, Flame, CheckCircle2, AlertCircle, LogOut, User, RefreshCw } from 'lucide-vue-next'
+import { Bell, LogOut, User, RefreshCw } from 'lucide-vue-next'
 
 const props = defineProps({
   user: {
     type: Object,
-    default: () => ({ full_name: 'Guru Kimia', email: 'guru@chemistfun.com', role: 'teacher' })
+    default: () => ({ full_name: 'Guru Kimia', email: 'guru@KimiFun.com', role: 'teacher' })
   },
   backendOnline: {
     type: Boolean,
@@ -36,45 +36,13 @@ const getInitials = (name) => {
         </svg>
       </div>
       <div>
-        <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">ChemistFun</h1>
-        <p class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-1">LABS • AI POWERED</p>
+        <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">KimiFun</h1>
+        <p class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-1">Virtual Chemistry Lab</p>
       </div>
     </div>
 
-    <!-- Center: Global Search Bar (From mockup) -->
-    <div class="hidden md:flex items-center flex-1 max-w-md mx-8">
-      <div class="relative w-full">
-        <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input 
-          type="text" 
-          placeholder="Cari kelas, modul, materi, atau siswa..." 
-          class="w-full bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-sm pl-10 pr-12 py-2.5 rounded-xl border border-slate-200/80 focus:border-chemist-primary focus:ring-2 focus:ring-chemist-primary/20 outline-none transition-all placeholder:text-slate-400"
-        />
-        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[11px] font-medium text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md shadow-2xs">
-          <span>⌘</span><span>K</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right: Status, Streak, Notifications & Profile -->
+    <!-- Right: Notifications & Profile -->
     <div class="flex items-center gap-3">
-      <!-- Backend Status Badge -->
-      <div 
-        @click="emit('refresh')"
-        title="Klik untuk refresh status backend"
-        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border transition-colors"
-        :class="backendOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'"
-      >
-        <span class="w-2 h-2 rounded-full" :class="backendOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
-        <span>{{ backendOnline ? 'API Connected' : 'API Offline' }}</span>
-      </div>
-
-      <!-- Streak Badge (Mockup) -->
-      <div class="hidden lg:flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200/70 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-2xs">
-        <Flame class="w-4 h-4 text-amber-500 fill-amber-500" />
-        <span>12 hari aktif</span>
-      </div>
-
       <!-- Notification Bell -->
       <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors">
         <Bell class="w-5 h-5" />
@@ -121,7 +89,7 @@ const getInitials = (name) => {
               class="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2.5"
             >
               <RefreshCw class="w-4 h-4 text-slate-400" />
-              <span>Sinkronkan Data API</span>
+              <span>Refresh Status</span>
             </button>
           </div>
 
@@ -130,7 +98,7 @@ const getInitials = (name) => {
               @click="emit('logout'); showUserMenu = false"
               class="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-600 flex items-center gap-2.5 font-medium"
             >
-              <LogOut class="w-4 h-4 text-rose-500" />
+              <LogOut class="w-4 h-4" />
               <span>Keluar (Logout)</span>
             </button>
           </div>
@@ -139,4 +107,3 @@ const getInitials = (name) => {
     </div>
   </header>
 </template>
-

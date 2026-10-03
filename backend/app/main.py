@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="ChemistFun API",
+    title="KimiFun API",
     version="1.0.0",
     description="API Backend untuk Laboratorium Maya & Platform Pembelajaran Kimia",
     lifespan=lifespan,
@@ -51,7 +51,7 @@ app.include_router(assessment_router, prefix=API_PREFIX)
 @app.get("/", tags=["Root"])
 async def read_root():
     return {
-        "message": "Welcome to ChemistFun API",
+        "message": "Welcome to KimiFun API",
         "status": "online",
         "docs_url": "/docs",
     }
@@ -61,5 +61,5 @@ async def read_root():
 async def health_check():
     return {
         "status": "healthy",
-        "service": "chemistfun-backend",
+        "service": "KimiFun-backend",
     }

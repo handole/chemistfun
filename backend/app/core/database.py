@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase
 # Database URL support for asyncpg
 raw_url = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/chemistfun_db",
+    "postgresql://postgres:postgres@localhost:5432/KimiFun_db",
 )
 
 if raw_url.startswith("postgresql://"):

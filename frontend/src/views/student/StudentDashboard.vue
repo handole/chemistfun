@@ -11,7 +11,12 @@ import {
   ArrowRight,
   UserCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Play,
+  Pause,
+  RefreshCw,
+  Check,
+  Droplets
 } from 'lucide-vue-next'
 import { api } from '@/api/client'
 import StoichiometryLab from '@/views/virtual-lab/StoichiometryLab.vue'
@@ -144,7 +149,89 @@ const handleEnrollByCode = async () => {
   }
 }
 
+// Interactive Student Custom Lab State
+const studentLabVolume = ref(0)
+const studentIsTitrating = ref(false)
+let studentTitrationTimer = null
+const studentNotes = ref('')
+const studentNotesSaved = ref(false)
+
+const studentEqVolume = computed(() => {
+  if (!customLabConfig.value?.config_data) return 25
+  const cfg = customLabConfig.value.config_data
+  const m1 = cfg.solution_molarity || 0.1
+  const m2 = cfg.titrant_molarity || 0.1
+  const v1 = 25
+  return +((m1 * v1) / (m2 || 1)).toFixed(1)
+})
+
+const studentLiquidColor = computed(() => {
+  if (!customLabConfig.value?.config_data) return 'rgba(224, 242, 254, 0.5)'
+  const cfg = customLabConfig.value.config_data
+  if (studentLabVolume.value >= studentEqVolume.value) {
+    return cfg.color_end || 'rgba(244, 114, 182, 0.8)'
+  }
+  return cfg.color_start || 'rgba(224, 242, 254, 0.5)'
+})
+
+const studentPhValue = computed(() => {
+  const eq = studentEqVolume.value || 25
+  const maxV = customLabConfig.value?.config_data?.max_volume_ml || 50
+  if (studentLabVolume.value < eq) {
+    const diff = (eq - studentLabVolume.value) / eq
+    return (1.0 + (1 - diff) * 6.0).toFixed(1)
+  } else if (Math.abs(studentLabVolume.value - eq) < 0.2) {
+    return '7.0'
+  } else {
+    const diff = (studentLabVolume.value - eq) / maxV
+    return Math.min(14.0, +(7.0 + diff * 7.0)).toFixed(1)
+  }
+})
+
+const studentReactionStatus = computed(() => {
+  const eq = studentEqVolume.value || 25
+  if (studentLabVolume.value < eq) return 'Asam Berlebih (Belum Netral)'
+  if (Math.abs(studentLabVolume.value - eq) < 0.2) return 'Titik Ekuivalen Netral'
+  return 'Basa Berlebih (Lewat Titik Akhir)'
+})
+
+const toggleStudentTitration = () => {
+  studentIsTitrating.value = !studentIsTitrating.value
+  if (studentIsTitrating.value) {
+    studentTitrationTimer = setInterval(() => {
+      const maxV = customLabConfig.value?.config_data?.max_volume_ml || 50
+      if (!studentIsTitrating.value || studentLabVolume.value >= maxV) {
+        clearInterval(studentTitrationTimer)
+        studentIsTitrating.value = false
+      } else {
+        studentLabVolume.value = +(studentLabVolume.value + 0.5).toFixed(1)
+      }
+    }, 150)
+  } else {
+    clearInterval(studentTitrationTimer)
+  }
+}
+
+const addStudentDrop = () => {
+  const maxV = customLabConfig.value?.config_data?.max_volume_ml || 50
+  if (studentLabVolume.value < maxV) {
+    studentLabVolume.value = +(studentLabVolume.value + 0.5).toFixed(1)
+  }
+}
+
+const resetStudentSimulation = () => {
+  if (studentTitrationTimer) clearInterval(studentTitrationTimer)
+  studentIsTitrating.value = false
+  studentLabVolume.value = 0
+}
+
+const saveStudentNotes = () => {
+  studentNotesSaved.value = true
+  setTimeout(() => (studentNotesSaved.value = false), 3000)
+}
+
 const openVirtualLab = async (mat = null) => {
+  resetStudentSimulation()
   if (mat) {
     selectedMaterial.value = mat
     try {
@@ -187,8 +274,23 @@ onMounted(() => {
         </p>
       </div>
 
-      <!-- Quick Action: Join Class by Code -->
-      <div class="w-full md:w-80 bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-2.5">
+      <!-- Active Class Badge (Jika sudah punya kelas) -->
+      <div v-if="classes.length > 0" class="w-full md:w-auto bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-chemist-primary/10 text-chemist-primary flex items-center justify-center font-bold">
+          <BookOpen class="w-5 h-5" />
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kelas Terdaftar</span>
+          <span class="text-sm font-bold text-slate-900 block">{{ selectedClass?.name || classes[0].name }}</span>
+          <span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+            <CheckCircle2 class="w-3 h-3" />
+            <span>Kelas {{ selectedClass?.grade_level || classes[0].grade_level }} Kimia Aktif</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Action: Join Class by Code (Hanya tampil jika belum punya kelas) -->
+      <div v-else class="w-full md:w-80 bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-2.5">
         <span class="text-xs font-bold text-slate-800 block">Gabung Kelas Baru</span>
         <div class="flex gap-2">
           <input
@@ -402,7 +504,7 @@ onMounted(() => {
         </button>
       </div>
 
-      <!-- Custom Lab Simulation (Configured by Teacher/AI) -->
+      <!-- Custom Lab Simulation (Configured by Teacher) -->
       <div v-if="labMode === 'custom' && customLabConfig" class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-card space-y-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
@@ -426,53 +528,177 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Student Interaction Beaker Canvas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          <div class="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200">
-            <!-- Beaker Visual representation -->
-            <div class="w-40 h-56 border-4 border-slate-400 border-t-0 rounded-b-3xl relative flex flex-col justify-end p-2 bg-white/70 overflow-hidden shadow-inner">
-              <div 
-                class="w-full transition-all duration-300 rounded-b-2xl relative"
-                :style="{
-                  height: '60%',
-                  backgroundColor: customLabConfig.config_data?.color_end || '#F472B6'
-                }"
+        <!-- Student Interaction Titration Canvas -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <!-- Left: Simulation Canvas (7 Cols) -->
+          <div class="lg:col-span-7 bg-slate-50 rounded-2xl border border-slate-200/80 p-5 space-y-4">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-700">Simulasi Titrasi Langsung</span>
+              <button 
+                @click="resetStudentSimulation"
+                class="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-200/60 transition-colors flex items-center gap-1 font-semibold"
+                title="Reset Percobaan"
               >
-                <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                <RefreshCw class="w-3.5 h-3.5" />
+                <span>Reset</span>
+              </button>
+            </div>
+
+            <!-- Beaker & Titration Apparatus Canvas -->
+            <div class="h-72 bg-gradient-to-b from-slate-100 to-slate-50 rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden">
+              <!-- Buret tip above -->
+              <div class="absolute top-2 w-3.5 h-20 bg-slate-300 rounded-b flex flex-col justify-end items-center shadow-xs">
+                <span v-if="studentIsTitrating" class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping mb-1"></span>
+              </div>
+
+              <!-- Erlenmeyer Flask Simulation -->
+              <div class="w-40 h-48 relative flex flex-col items-center justify-end">
+                <!-- Flask Neck -->
+                <div class="w-10 h-14 border-l-2 border-r-2 border-slate-400 bg-transparent z-10"></div>
+                
+                <!-- Flask Body (Triangular Trapeze) -->
+                <div 
+                  class="w-40 h-34 border-2 border-slate-400 rounded-b-2xl relative overflow-hidden flex flex-col justify-end p-1 transition-colors duration-500 shadow-inner"
+                  :style="{ backgroundColor: studentLiquidColor }"
+                >
+                  <!-- Liquid level wave -->
+                  <div 
+                    class="w-full rounded-b-xl transition-all duration-300 relative"
+                    :style="{ 
+                      height: `${Math.min(25 + studentLabVolume * 1.3, 92)}%`, 
+                      backgroundColor: studentLiquidColor 
+                    }"
+                  >
+                    <div v-if="studentIsTitrating" class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                  </div>
+
+                  <!-- Measurement Lines -->
+                  <div class="absolute left-2 top-4 text-[9px] font-mono text-slate-400 space-y-2 pointer-events-none">
+                    <div>- 50ml</div>
+                    <div>- 25ml</div>
+                    <div>- 10ml</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Floating Telemetry Card -->
+              <div class="absolute right-3 bottom-3 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-sm text-xs space-y-1.5 max-w-[180px]">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-slate-400 text-[11px]">pH Larutan:</span>
+                  <span class="font-mono font-bold text-slate-900 text-sm">{{ studentPhValue }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-slate-400 text-[11px]">Titran Masuk:</span>
+                  <span class="font-mono font-bold text-chemist-primary text-sm">{{ studentLabVolume }} mL</span>
+                </div>
+                <div class="pt-1 border-t border-slate-100">
+                  <span 
+                    class="text-[10px] font-bold px-1.5 py-0.5 rounded block text-center truncate"
+                    :class="studentLabVolume >= studentEqVolume ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'"
+                  >
+                    {{ studentReactionStatus }}
+                  </span>
+                </div>
               </div>
             </div>
-            <span class="text-xs text-slate-500 font-medium mt-3">Indikator: <strong class="text-slate-800">{{ customLabConfig.config_data?.indicator_type || 'Phenolphthalein' }}</strong></span>
+
+            <!-- Controls for Student -->
+            <div class="space-y-3 pt-1">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
+                <span>Aliran Kran Buret (Volume Titran):</span>
+                <span class="font-mono font-bold text-slate-900">{{ studentLabVolume }} / {{ customLabConfig.config_data?.max_volume_ml || 50 }} mL</span>
+              </div>
+
+              <input 
+                type="range" 
+                min="0" 
+                :max="customLabConfig.config_data?.max_volume_ml || 50" 
+                step="0.5"
+                v-model.number="studentLabVolume"
+                class="w-full accent-chemist-primary cursor-pointer"
+              />
+
+              <div class="flex items-center gap-2 pt-1 flex-wrap sm:flex-nowrap">
+                <button 
+                  @click="toggleStudentTitration"
+                  class="flex-1 py-2 px-3 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 shadow-2xs"
+                  :class="studentIsTitrating ? 'bg-rose-500 hover:bg-rose-600' : 'bg-chemist-primary hover:bg-blue-600'"
+                >
+                  <Pause v-if="studentIsTitrating" class="w-3.5 h-3.5" />
+                  <Play v-else class="w-3.5 h-3.5" />
+                  <span>{{ studentIsTitrating ? 'Tutup Kran Buret' : 'Buka Kran Otomatis' }}</span>
+                </button>
+
+                <button 
+                  @click="addStudentDrop"
+                  class="py-2 px-3 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 flex items-center gap-1.5 shadow-2xs"
+                  title="Tambah tetesan 0.5 mL"
+                >
+                  <Droplets class="w-3.5 h-3.5 text-sky-500" />
+                  <span>+0.5 mL</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="space-y-4">
-            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Lembar Catatan Pengamatan Siswa</h4>
-            <div class="space-y-2 text-xs">
-              <div>
-                <label class="block font-semibold text-slate-700 mb-1">Warna Awal Larutan</label>
-                <input 
-                  type="text" 
-                  disabled 
-                  :value="customLabConfig.config_data?.color_start || '#F8FAFC'"
-                  class="w-full bg-slate-100 text-slate-600 px-3 py-2 rounded-xl border border-slate-200 font-mono text-xs"
-                />
+          <!-- Right: Observation & Analysis Sheet (5 Cols) -->
+          <div class="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Lembar Laporan Praktikum Siswa</span>
+            </h4>
+
+            <div class="space-y-3 text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <span class="text-[10px] text-slate-400 block font-medium">Warna Awal</span>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <span 
+                      class="w-3.5 h-3.5 rounded-full border border-slate-300"
+                      :style="{ backgroundColor: customLabConfig.config_data?.color_start || '#F8FAFC' }"
+                    ></span>
+                    <span class="font-mono text-[11px] text-slate-700 font-semibold truncate">{{ customLabConfig.config_data?.color_start || '#F8FAFC' }}</span>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <span class="text-[10px] text-slate-400 block font-medium">Warna Titik Akhir</span>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <span 
+                      class="w-3.5 h-3.5 rounded-full border border-slate-300"
+                      :style="{ backgroundColor: customLabConfig.config_data?.color_end || '#F472B6' }"
+                    ></span>
+                    <span class="font-mono text-[11px] text-slate-700 font-semibold truncate">{{ customLabConfig.config_data?.color_end || '#F472B6' }}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block font-semibold text-slate-700 mb-1">Warna Titik Akhir Reaksi</label>
-                <input 
-                  type="text" 
-                  disabled 
-                  :value="customLabConfig.config_data?.color_end || '#F472B6'"
-                  class="w-full bg-slate-100 text-slate-600 px-3 py-2 rounded-xl border border-slate-200 font-mono text-xs"
-                />
+
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                <span class="text-[10px] text-slate-400 block font-medium">Indikator Terpasang</span>
+                <span class="font-semibold text-slate-800">{{ customLabConfig.config_data?.indicator_type || 'Phenolphthalein (PP)' }}</span>
               </div>
+
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">Catatan Analisis Siswa</label>
+                <label class="block font-bold text-slate-700 mb-1">Catatan Analisis & Kesimpulan Praktikum</label>
                 <textarea 
-                  rows="3" 
-                  placeholder="Tuliskan kesimpulan perubahan warna dan konsentrasi hasil percobaan..." 
-                  class="w-full bg-white px-3 py-2 rounded-xl border border-slate-200 outline-none text-xs text-slate-800"
+                  rows="4" 
+                  v-model="studentNotes"
+                  placeholder="Tuliskan data volume saat titik ekuivalen tercapai, perubahan warna larutan, dan perhitungan konsentrasi analit..." 
+                  class="w-full bg-slate-50 focus:bg-white p-3 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none text-xs text-slate-800 transition-all font-sans"
                 ></textarea>
               </div>
+
+              <div v-if="studentNotesSaved" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-semibold flex items-center gap-1.5 text-xs">
+                <Check class="w-3.5 h-3.5 text-emerald-600" />
+                <span>Catatan pengamatan praktikum berhasil disimpan!</span>
+              </div>
+
+              <button
+                @click="saveStudentNotes"
+                class="w-full py-2.5 px-4 bg-chemist-dark hover:bg-slate-900 text-white rounded-xl font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5"
+              >
+                <Check class="w-3.5 h-3.5 text-emerald-400" />
+                <span>Simpan Catatan Praktikum</span>
+              </button>
             </div>
           </div>
         </div>

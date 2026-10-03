@@ -1,8 +1,8 @@
-// ChemistFun API Client
+// KimiFun API Client
 const BASE_URL = '/api'
 
 function getAuthHeader() {
-  const token = localStorage.getItem('chemistfun_token')
+  const token = localStorage.getItem('KimiFun_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -84,6 +84,12 @@ export const api = {
     getStudents(classUuid) {
       return request(`/classes/${classUuid}/students`)
     },
+    enrollStudent(classUuid, studentId) {
+      return request(`/classes/${classUuid}/students`, {
+        method: 'POST',
+        body: JSON.stringify({ student_id: studentId }),
+      })
+    },
     unenroll(classUuid, studentId) {
       return request(`/classes/${classUuid}/students/${studentId}`, {
         method: 'DELETE',
@@ -93,6 +99,16 @@ export const api = {
       return request(`/classes/${classUuid}`, {
         method: 'DELETE',
       })
+    }
+  },
+
+  // Users
+  users: {
+    list(role = null) {
+      const params = new URLSearchParams()
+      if (role) params.append('role', role)
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      return request(`/users/${qs}`)
     }
   },
 

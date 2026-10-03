@@ -81,7 +81,7 @@ onMounted(() => {
           <!-- Status pill -->
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-xs font-bold">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            <span>Ruang Guru ChemistFun Siap Digunakan</span>
+            <span>Ruang Guru KimiFun Siap Digunakan</span>
           </div>
 
           <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">

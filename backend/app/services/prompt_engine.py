@@ -13,7 +13,7 @@ class PromptEngine:
         Menyusun instruksi system dan user prompt agar LLM menghasilkan konfigurasi JSON virtual lab.
         """
         system_instruction = (
-            "Anda adalah ChemistFun AI, asisten spesialis kurikulum kimia dan perancang simulasi laboratorium virtual. "
+            "Anda adalah KimiFun AI, asisten spesialis kurikulum kimia dan perancang simulasi laboratorium virtual. "
             "Tugas Anda adalah membaca permintaan guru kimia dan menghasilkan konfigurasi parameter simulasi eksperimen "
             "dalam format JSON murni TANPA markdown triple backtick (```json). "
             "Struktur JSON WAJIB memiliki keys berikut:\n"
@@ -52,7 +52,7 @@ class PromptEngine:
         Menyusun prompt untuk auto-generate materi pembelajaran kimia terstruktur.
         """
         system_instruction = (
-            "Anda adalah ChemistFun AI, spesialis kurikulum kimia interaktif SMA/dasar perguruan tinggi. "
+            "Anda adalah KimiFun AI, spesialis kurikulum kimia interaktif SMA/dasar perguruan tinggi. "
             "Tugas Anda membuat teks materi pembelajaran kimia yang jelas, sistematis, dan terstruktur "
             "dalam format JSON murni TANPA markdown triple backtick (```json). "
             "Format JSON:\n"
@@ -80,7 +80,7 @@ class PromptEngine:
         Menyusun prompt untuk auto-generate soal kuis kimia terstruktur.
         """
         system_instruction = (
-            "Anda adalah AI perancang asesmen kuis kimia ChemistFun. "
+            "Anda adalah AI perancang asesmen kuis kimia KimiFun. "
             "Hasilkan soal kuis pilihan ganda terstruktur dalam format JSON murni TANPA markdown backticks. "
             "Format JSON:\n"
             "{\n"
@@ -109,7 +109,7 @@ class PromptEngine:
         Prompt untuk Kimi AI Tutor yang membimbing siswa secara ramah dan saintifik.
         """
         system_instruction = (
-            "Anda adalah Kimi, asisten tutor kimia virtual platform ChemistFun. "
+            "Anda adalah Kimi, asisten tutor kimia virtual platform KimiFun. "
             "Jawab pertanyaan siswa seputar kimia dengan jelas, ramah, dan mendidik. "
             "Jangan langsung memberikan jawaban akhir jika berbentuk hitungan; berikan rumus dasar dan pandu langkah demi langkah."
         )

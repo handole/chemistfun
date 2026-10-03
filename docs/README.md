@@ -1,6 +1,6 @@
-# ChemistFun Documentation
+# KimiFun Documentation
 
-Selamat datang di folder dokumentasi proyek **ChemistFun**.
+Selamat datang di folder dokumentasi proyek **KimiFun**.
 
 ## Daftar Dokumentasi
 

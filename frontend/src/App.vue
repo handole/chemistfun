@@ -67,8 +67,8 @@ const checkStatusAndUser = async () => {
   }
 
   // Check stored user
-  const savedUser = localStorage.getItem('chemistfun_user')
-  const savedToken = localStorage.getItem('chemistfun_token')
+  const savedUser = localStorage.getItem('KimiFun_user')
+  const savedToken = localStorage.getItem('KimiFun_token')
 
   if (savedUser && savedToken) {
     try {
@@ -78,14 +78,14 @@ const checkStatusAndUser = async () => {
       if (me) user.value = me
       else {
         user.value = null
-        localStorage.removeItem('chemistfun_token')
-        localStorage.removeItem('chemistfun_user')
+        localStorage.removeItem('KimiFun_token')
+        localStorage.removeItem('KimiFun_user')
       }
     } catch (e) {
       console.warn('Session expired or invalid, clearing local session')
       user.value = null
-      localStorage.removeItem('chemistfun_token')
-      localStorage.removeItem('chemistfun_user')
+      localStorage.removeItem('KimiFun_token')
+      localStorage.removeItem('KimiFun_user')
     }
   } else {
     user.value = null
@@ -99,8 +99,8 @@ const handleLoginSuccess = (newUser) => {
 }
 
 const handleLogout = () => {
-  localStorage.removeItem('chemistfun_token')
-  localStorage.removeItem('chemistfun_user')
+  localStorage.removeItem('KimiFun_token')
+  localStorage.removeItem('KimiFun_user')
   user.value = null
 }
 
@@ -119,7 +119,7 @@ onMounted(() => {
   <div v-if="!authChecked" class="min-h-screen bg-[#F6F8FC] flex items-center justify-center">
     <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
       <RefreshCw class="w-4 h-4 animate-spin text-chemist-primary" />
-      <span>Memuat sesi ChemistFun...</span>
+      <span>Memuat sesi KimiFun...</span>
     </div>
   </div>
 
