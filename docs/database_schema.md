@@ -1,6 +1,6 @@
-# Dokumentasi Skema Basis Data & Model ERD (Tahap 1)
+# Dokumentasi Skema Basis Data & Model ERD
 
-Dokumen ini berisi rancangan struktur model basis data (*ERD Logical Model*) untuk Tahap Pertama pada aplikasi **ChemistFun**, yang diimplementasikan menggunakan **FastAPI**, **SQLAlchemy 2.0 (Declarative Mapping)**, dan **PostgreSQL**.
+Dokumen ini berisi rancangan struktur model basis data (*ERD Logical Model*) pada aplikasi **KimiFun (KimiFun)**, yang diimplementasikan menggunakan **FastAPI**, **SQLAlchemy 2.0 (Declarative Mapping)**, dan **PostgreSQL 16**.
 
 > **Strategi Identifikasi Entitas (Hybrid ID & UUID Slug)**:
 > - **`id` (INTEGER, Primary Key, Auto-increment)**: Digunakan secara internal sebagai primary key dan referensi foreign key. Menjamin performa *join* dan *indexing* yang sangat cepat di level database PostgreSQL.
@@ -15,7 +15,6 @@ erDiagram
     users ||--o{ classes : "mengajar (teacher_id)"
     users ||--o{ class_students : "terdaftar (student_id)"
     classes ||--o{ class_students : "memiliki (class_id)"
-    classes ||--o{ modules : "memiliki (class_id)"
     modules ||--o{ materials : "berisi (module_id)"
     materials ||--|| virtual_labs : "memiliki (material_id)"
     modules ||--o{ evaluation_metrics : "memiliki (module_id)"
@@ -43,6 +42,7 @@ erDiagram
         uuid uuid UK
         int teacher_id FK
         varchar name
+        grade_level grade_level
         varchar enrollment_code UK
         timestamp created_at
     }
@@ -56,7 +56,7 @@ erDiagram
     modules {
         int id PK
         uuid uuid UK
-        int class_id FK
+        grade_level grade_level
         varchar title
         int order_index
     }
@@ -137,10 +137,10 @@ Semua model database ditempatkan di dalam folder modul masing-masing di bawah `b
 
 | No | Kelompok Fungsionalitas | Lokasi File Model | Tabel yang Dikelola |
 | :---: | :--- | :--- | :--- |
-| **1** | **Manajemen Akses & Pengguna** | [`backend/app/modules/users/models.py`](file:///Users/handokodenih/DEV/chemistfun/backend/app/modules/users/models.py) | `users` |
-| **2** | **Manajemen Kelas** | [`backend/app/modules/classes/models.py`](file:///Users/handokodenih/DEV/chemistfun/backend/app/modules/classes/models.py) | `classes`, `class_students` |
-| **3** | **Manajemen Materi & Virtual Lab** | [`backend/app/modules/content/models.py`](file:///Users/handokodenih/DEV/chemistfun/backend/app/modules/content/models.py) | `modules`, `materials`, `virtual_labs` |
-| **4** | **Bank Soal & Transaksi Siswa** | [`backend/app/modules/assessment/models.py`](file:///Users/handokodenih/DEV/chemistfun/backend/app/modules/assessment/models.py) | `evaluation_metrics`, `quizzes`, `questions`, `student_quiz_attempts`, `student_answers` |
+| **1** | **Manajemen Akses & Pengguna** | `backend/app/modules/users/models.py` | `users` |
+| **2** | **Manajemen Kelas & Level** | `backend/app/modules/classes/models.py` | `classes`, `class_students` |
+| **3** | **Manajemen Materi & Virtual Lab** | `backend/app/modules/content/models.py` | `modules`, `materials`, `virtual_labs` |
+| **4** | **Bank Soal & Asesmen Siswa** | `backend/app/modules/assessment/models.py` | `evaluation_metrics`, `quizzes`, `questions`, `student_quiz_attempts`, `student_answers` |
 
 ---
 
@@ -149,7 +149,7 @@ Semua model database ditempatkan di dalam folder modul masing-masing di bawah `b
 ### 3.1. Manajemen Akses & Kelas
 
 #### Tabel `users`
-Menyimpan data kredensial guru dan siswa.
+Menyimpan data akun pengguna guru dan siswa.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
@@ -158,48 +158,49 @@ Menyimpan data kredensial guru dan siswa.
 | `email` | `VARCHAR(255)` | Unique, Not Null, Index | Alamat email pengguna |
 | `password_hash` | `VARCHAR(255)` | Not Null | Hash password keamanan |
 | `full_name` | `VARCHAR(255)` | Not Null | Nama lengkap pengguna |
-| `role` | `ENUM` | Not Null | Nilai: `'teacher'`, `'student'` |
-| `created_at` | `TIMESTAMP` | Not Null | Server default `now()` (UTC) |
-| `updated_at` | `TIMESTAMP` | Not Null | Server default `now()`, auto-update |
+| `role` | `ENUM ('teacher', 'student')` | Not Null | Role hak akses |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | Not Null | Server default `now()` |
+| `updated_at` | `TIMESTAMP WITH TIME ZONE` | Not Null | Server default `now()`, auto-update |
 
 #### Tabel `classes`
-Kelas atau mata pelajaran yang dibuat oleh guru.
+Sub-kelas yang dibuat guru (misal `X-1`, `X-2`, `XI-IPA-1`) yang terikat pada satu `grade_level`.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key, Auto-increment | ID internal kelas |
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
-| `teacher_id` | `INTEGER` | FK -> `users.id`, Not Null, Index | Guru pembuat/pengampu kelas |
-| `name` | `VARCHAR(255)` | Not Null | Contoh: "Kimia Kelas XI" |
+| `teacher_id` | `INTEGER` | FK -> `users.id` (CASCADE), Not Null, Index | Guru pengampu kelas |
+| `name` | `VARCHAR(255)` | Not Null | Nama sub-kelas (contoh: "X-1", "XI-IPA-A") |
+| `grade_level` | `ENUM ('X', 'XI', 'XII')` | Not Null, Index, Default `'X'` | Tingkatan level kelas |
 | `enrollment_code` | `VARCHAR(50)` | Unique, Not Null, Index | Kode acak unik siswa bergabung |
-| `created_at` | `TIMESTAMP` | Not Null | Waktu kelas dibuat |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | Not Null | Server default `now()` |
 
 #### Tabel `class_students` *(Junction Table)*
-Menghubungkan siswa dengan kelas (Relasi Many-to-Many).
+Menghubungkan siswa dengan sub-kelas (Relasi Many-to-Many).
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `class_id` | `INTEGER` | Composite PK, FK -> `classes.id` (CASCADE) | ID Kelas |
 | `student_id` | `INTEGER` | Composite PK, FK -> `users.id` (CASCADE) | ID Siswa |
-| `joined_at` | `TIMESTAMP` | Not Null | Waktu siswa bergabung |
+| `joined_at` | `TIMESTAMP WITH TIME ZONE` | Not Null | Waktu siswa bergabung |
 
 ---
 
-### 3.2. Manajemen Materi & Virtual Lab (Content Management)
+### 3.2. Manajemen Kurikulum, Materi & Virtual Lab
 
 #### Tabel `modules`
-Bab atau topik besar di dalam kelas.
+Bab/topik besar kurikulum yang terikat langsung ke tingkatan `grade_level` (`X`, `XI`, `XII`). Seluruh sub-kelas di tingkatan yang sama otomatis mengakses modul ini.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key, Auto-increment | ID internal modul |
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
-| `class_id` | `INTEGER` | FK -> `classes.id` (CASCADE), Not Null, Index | ID Kelas pemilik modul |
-| `title` | `VARCHAR(255)` | Not Null | Contoh: "Bab 1: Larutan Asam & Basa" |
+| `grade_level` | `ENUM ('X', 'XI', 'XII')` | Not Null, Index, Default `'X'` | Tingkatan kurikulum level |
+| `title` | `VARCHAR(255)` | Not Null | Contoh: "Stoikiometri & Reaksi Kimia" |
 | `order_index` | `INTEGER` | Not Null, Default `0` | Urutan penomoran bab |
 
 #### Tabel `materials`
-Materi teoritikal di dalam modul.
+Materi pembelajaran di dalam modul.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
@@ -207,38 +208,38 @@ Materi teoritikal di dalam modul.
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
 | `module_id` | `INTEGER` | FK -> `modules.id` (CASCADE), Not Null, Index | ID Modul induk |
 | `title` | `VARCHAR(255)` | Not Null | Judul materi pembelajaran |
-| `content_html` | `TEXT` | Nullable | Konten materi rich text (HTML) |
+| `content_html` | `TEXT` | Nullable | Konten materi rich text / HTML |
 | `order_index` | `INTEGER` | Not Null, Default `0` | Urutan materi dalam modul |
-| `is_published` | `BOOLEAN` | Not Null, Default `False` | Status tayang materi |
+| `is_published` | `BOOLEAN` | Not Null, Default `False` | Status publikasi untuk siswa |
 
 #### Tabel `virtual_labs`
-Menyimpan konfigurasi animasi simulasi interaktif (termasuk hasil generate AI). Relasi **1-to-1** dengan tabel `materials`.
+Menyimpan konfigurasi animasi simulasi interaktif lab kimia. Relasi **1-to-1** dengan tabel `materials`.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key, Auto-increment | ID internal virtual lab |
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
 | `material_id` | `INTEGER` | FK -> `materials.id` (CASCADE), Unique, Not Null | Relasi 1-to-1 materi |
-| `ai_prompt_history` | `TEXT` | Nullable | Log instruksi guru/pengguna ke AI |
-| `config_data` | `JSONB` | Not Null, Default `{}` | Parameter simulasi animasi (reaksi, konsentrasi, pH, dll) |
-| `status` | `ENUM` | Not Null, Default `'draft'` | Nilai: `'draft'`, `'generating'`, `'ready'`, `'error'` |
+| `ai_prompt_history` | `TEXT` | Nullable | Log riwayat instruksi prompt generator |
+| `config_data` | `JSONB` | Not Null, Default `{}` | Parameter simulasi (analit, titran, molaritas, warna, pH, volume) |
+| `status` | `ENUM ('draft', 'generating', 'ready', 'error')` | Not Null, Default `'draft'` | Status siklus hidup lab |
 
 ---
 
-### 3.3. Bank Soal & Metrik Evaluasi (Assessment)
+### 3.3. Bank Soal & Metrik Asesmen (Assessment)
 
 #### Tabel `evaluation_metrics`
-Indikator pemahaman untuk analisis **Grafik Radar (Radar Chart)**.
+Indikator pemahaman kompetensi sains untuk analisis **Grafik Radar (Radar Chart)**.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key, Auto-increment | ID internal metrik |
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
 | `module_id` | `INTEGER` | FK -> `modules.id` (CASCADE), Not Null, Index | ID Modul induk |
-| `metric_name` | `VARCHAR(255)` | Not Null | Contoh: "Perhitungan Titrasi", "Konsep Derajat Ionisasi" |
+| `metric_name` | `VARCHAR(255)` | Not Null | Contoh: "Pemahaman Konsep", "Perhitungan Reaksi" |
 
 #### Tabel `quizzes`
-Kuis penilaian evaluasi modul. Relasi **1-to-1** dengan tabel `modules`.
+Kuis evaluasi modul. Relasi **1-to-1** dengan tabel `modules`.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
@@ -257,33 +258,33 @@ Butir-butir soal di dalam kuis yang terkait dengan indikator metrik tertentu.
 | `id` | `INTEGER` | Primary Key, Auto-increment | ID internal soal |
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
 | `quiz_id` | `INTEGER` | FK -> `quizzes.id` (CASCADE), Not Null, Index | ID Kuis induk |
-| `metric_id` | `INTEGER` | FK -> `evaluation_metrics.id` (SET NULL), Nullable, Index | Indikator kompetensi soal |
+| `metric_id` | `INTEGER` | FK -> `evaluation_metrics.id` (SET NULL), Nullable, Index | Indikator kompetensi radar |
 | `question_text` | `TEXT` | Not Null | Teks pertanyaan soal |
-| `question_type` | `ENUM` | Not Null | Nilai: `'multiple_choice'`, `'true_false'` |
-| `options` | `JSONB` | Not Null | Opsi: `[{"id":"A", "text":"..."}, ...]` |
-| `correct_answer` | `VARCHAR(50)` | Not Null | ID opsi kunci jawaban (misal "A") |
-| `weight_score` | `INTEGER` | Not Null, Default `1` | Bobot nilai per butir soal |
+| `question_type` | `ENUM ('multiple_choice', 'true_false')` | Not Null | Tipe soal |
+| `options` | `JSONB` | Not Null | Daftar pilihan jawaban |
+| `correct_answer` | `VARCHAR(50)` | Not Null | Kunci jawaban benar (misal "A") |
+| `weight_score` | `INTEGER` | Not Null, Default `1` | Bobot nilai per butir |
 
 ---
 
 ### 3.4. Transaksi & Analitik Siswa (Student Records)
 
 #### Tabel `student_quiz_attempts`
-Mencatat saat siswa memulai dan menyelesaikan kuis beserta hasil analitik pemahamannya.
+Mencatat sesi pengerjaan kuis siswa, skor akhir, dan snapshot radar kompetensi.
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key, Auto-increment | ID internal sesi pengerjaan |
 | `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
-| `student_id` | `INTEGER` | FK -> `users.id` (CASCADE), Not Null, Index | Siswa yang mengerjakan |
+| `student_id` | `INTEGER` | FK -> `users.id` (CASCADE), Not Null, Index | Siswa peserta kuis |
 | `quiz_id` | `INTEGER` | FK -> `quizzes.id` (CASCADE), Not Null, Index | Kuis yang dikerjakan |
-| `started_at` | `TIMESTAMP` | Not Null, Server default `now()` | Waktu mulai pengerjaan |
-| `completed_at` | `TIMESTAMP` | Nullable | Waktu submit / selesai |
-| `total_score` | `NUMERIC(5, 2)` | Nullable | Nilai total akhir kuis |
-| `radar_chart_data` | `JSONB` | Nullable | Hasil kalkulasi persentase pemahaman per `metric_id` |
+| `started_at` | `TIMESTAMP WITH TIME ZONE` | Not Null, Server default `now()` | Waktu mulai |
+| `completed_at` | `TIMESTAMP WITH TIME ZONE` | Nullable | Waktu submit / selesai |
+| `total_score` | `NUMERIC(5, 2)` | Nullable | Nilai total akhir (0 - 100) |
+| `radar_chart_data` | `JSONB` | Nullable | Snapshot nilai capaian per indikator kompetensi |
 
 #### Tabel `student_answers`
-Mencatat setiap jawaban yang dipilih siswa (berguna untuk fitur auto-save dan analisis butir soal).
+Mencatat setiap jawaban yang dipilih siswa (auto-save saat pengerjaan).
 
 | Kolom | Tipe Data | Constraint | Keterangan |
 | :--- | :--- | :--- | :--- |
@@ -292,18 +293,4 @@ Mencatat setiap jawaban yang dipilih siswa (berguna untuk fitur auto-save dan an
 | `attempt_id` | `INTEGER` | FK -> `student_quiz_attempts.id` (CASCADE), Not Null, Index | ID sesi attempt kuis |
 | `question_id` | `INTEGER` | FK -> `questions.id` (CASCADE), Not Null, Index | ID Soal |
 | `selected_answer` | `VARCHAR(50)` | Nullable | Jawaban yang dipilih siswa |
-| `is_correct` | `BOOLEAN` | Nullable | Apakah jawaban benar |
-
----
-
-## 4. Keunggulan Pola Arsitektur Ini
-
-1. **Efisiensi Database (Integer PK & FK)**:
-   - Penggunaan tipe integer auto-increment untuk kunci primer dan kunci asing membuat indeks B-Tree database berukuran jauh lebih kecil, hemat memori RAM, dan operasi *JOIN* antar tabel berkali-kali lipat lebih cepat dibanding menggunakan UUID sebagai FK.
-
-2. **Keamanan URL & Public API (UUID Slug)**:
-   - Seluruh endpoint API publik untuk Frontend menggunakan parameter `uuid` (contoh: `/api/modules/{uuid}` atau `/api/quizzes/{uuid}`), sehingga pengguna di Frontend tidak dapat menebak total data maupun merekayasa urutan ID (*anti-enumeration*).
-
-3. **Fleksibilitas JSONB**:
-   - `virtual_labs.config_data`: Format parameter simulasi animasi interaktif yang dihasilkan AI dapat berubah tanpa perlu migrasi skema database.
-   - `student_quiz_attempts.radar_chart_data`: Data analitik disimpan siap saji untuk konsumsi langsung oleh grafik radar di Frontend.
+| `is_correct` | `BOOLEAN` | Nullable | Evaluasi kebenaran jawaban |

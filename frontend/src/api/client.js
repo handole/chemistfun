@@ -1,8 +1,8 @@
-// ChemistFun API Client
+// KimiFun API Client
 const BASE_URL = '/api'
 
 function getAuthHeader() {
-  const token = localStorage.getItem('chemistfun_token')
+  const token = localStorage.getItem('KimiFun_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -84,6 +84,12 @@ export const api = {
     getStudents(classUuid) {
       return request(`/classes/${classUuid}/students`)
     },
+    enrollStudent(classUuid, studentId) {
+      return request(`/classes/${classUuid}/students`, {
+        method: 'POST',
+        body: JSON.stringify({ student_id: studentId }),
+      })
+    },
     unenroll(classUuid, studentId) {
       return request(`/classes/${classUuid}/students/${studentId}`, {
         method: 'DELETE',
@@ -96,10 +102,30 @@ export const api = {
     }
   },
 
+  // Users
+  users: {
+    list(role = null) {
+      const params = new URLSearchParams()
+      if (role) params.append('role', role)
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      return request(`/users/${qs}`)
+    }
+  },
+
   // Content (Modules & Materials & Virtual Lab)
   content: {
-    listModules(classId) {
-      return request(`/content/modules?class_id=${classId}`)
+    listModules(classIdOrParams = null) {
+      if (!classIdOrParams) return request('/content/modules')
+      if (typeof classIdOrParams === 'object') {
+        const params = new URLSearchParams()
+        if (classIdOrParams.grade_level) params.append('grade_level', classIdOrParams.grade_level)
+        if (classIdOrParams.class_id) params.append('class_id', classIdOrParams.class_id)
+        return request(`/content/modules?${params.toString()}`)
+      }
+      return request(`/content/modules?class_id=${classIdOrParams}`)
+    },
+    listModulesByGrade(gradeLevel) {
+      return request(`/content/modules?grade_level=${gradeLevel}`)
     },
     createModule(data) {
       return request('/content/modules', {

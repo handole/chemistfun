@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.classes.models import GradeLevel
 from app.modules.content.models import Material, Module, VirtualLab, VirtualLabStatus
 from app.modules.content.schemas import (
     MaterialCreate,
@@ -31,11 +32,20 @@ class ContentController:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_modules_by_class(db: AsyncSession, class_id: int) -> List[Module]:
+    async def get_modules_by_grade_level(db: AsyncSession, grade_level: GradeLevel) -> List[Module]:
         query = (
             select(Module)
-            .where(Module.class_id == class_id)
+            .where(Module.grade_level == grade_level)
             .order_by(Module.order_index.asc(), Module.id.asc())
+        )
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_all_modules(db: AsyncSession) -> List[Module]:
+        query = (
+            select(Module)
+            .order_by(Module.grade_level.asc(), Module.order_index.asc(), Module.id.asc())
         )
         result = await db.execute(query)
         return list(result.scalars().all())
@@ -43,7 +53,7 @@ class ContentController:
     @staticmethod
     async def create_module(db: AsyncSession, obj_in: ModuleCreate) -> Module:
         db_obj = Module(
-            class_id=obj_in.class_id,
+            grade_level=obj_in.grade_level,
             title=obj_in.title,
             order_index=obj_in.order_index,
         )

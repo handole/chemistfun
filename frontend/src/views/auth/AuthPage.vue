@@ -23,8 +23,8 @@ const handleLogin = async () => {
   error.value = ''
   try {
     const res = await api.auth.login(email.value.trim(), password.value)
-    localStorage.setItem('chemistfun_token', res.access_token)
-    localStorage.setItem('chemistfun_user', JSON.stringify(res.user))
+    localStorage.setItem('KimiFun_token', res.access_token)
+    localStorage.setItem('KimiFun_user', JSON.stringify(res.user))
     emit('login-success', res.user)
   } catch (err) {
     error.value = err.message || 'Email atau password salah.'
@@ -47,8 +47,8 @@ const handleRegister = async () => {
       full_name: fullName.value.trim(),
       role: role.value
     })
-    localStorage.setItem('chemistfun_token', res.access_token)
-    localStorage.setItem('chemistfun_user', JSON.stringify(res.user))
+    localStorage.setItem('KimiFun_token', res.access_token)
+    localStorage.setItem('KimiFun_user', JSON.stringify(res.user))
     emit('login-success', res.user)
   } catch (err) {
     error.value = err.message || 'Gagal mendaftarkan akun baru.'
@@ -67,7 +67,7 @@ const handleRegister = async () => {
           <Sparkles class="w-6 h-6 text-sky-400" />
         </div>
         <h2 class="text-xl font-extrabold text-slate-900 tracking-tight pt-2">
-          {{ mode === 'login' ? 'Masuk ke ChemistFun' : 'Daftar Akun ChemistFun' }}
+          {{ mode === 'login' ? 'Masuk ke KimiFun' : 'Daftar Akun KimiFun' }}
         </h2>
         <p class="text-xs text-slate-400">Platform Laboratorium Maya & Pembelajaran Kimia</p>
       </div>

@@ -10,7 +10,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'login-success'])
 
 const mode = ref('login') // 'login' | 'register'
-const email = ref('guru@chemistfun.com')
+const email = ref('guru@KimiFun.com')
 const password = ref('Password123!')
 const fullName = ref('')
 const role = ref('teacher')
@@ -23,8 +23,8 @@ const handleLogin = async () => {
   error.value = ''
   try {
     const res = await api.auth.login(email.value.trim(), password.value)
-    localStorage.setItem('chemistfun_token', res.access_token)
-    localStorage.setItem('chemistfun_user', JSON.stringify(res.user))
+    localStorage.setItem('KimiFun_token', res.access_token)
+    localStorage.setItem('KimiFun_user', JSON.stringify(res.user))
     emit('login-success', res.user)
     emit('close')
   } catch (err) {
@@ -48,8 +48,8 @@ const handleRegister = async () => {
       full_name: fullName.value.trim(),
       role: role.value
     })
-    localStorage.setItem('chemistfun_token', res.access_token)
-    localStorage.setItem('chemistfun_user', JSON.stringify(res.user))
+    localStorage.setItem('KimiFun_token', res.access_token)
+    localStorage.setItem('KimiFun_user', JSON.stringify(res.user))
     emit('login-success', res.user)
     emit('close')
   } catch (err) {
@@ -60,14 +60,14 @@ const handleRegister = async () => {
 }
 
 const quickLoginTeacher = async () => {
-  email.value = 'guru@chemistfun.com'
+  email.value = 'guru@KimiFun.com'
   password.value = 'Password123!'
   mode.value = 'login'
   await handleLogin()
 }
 
 const quickLoginStudent = async () => {
-  email.value = 'budi@chemistfun.com'
+  email.value = 'budi@KimiFun.com'
   password.value = 'Password123!'
   mode.value = 'login'
   await handleLogin()
@@ -91,7 +91,7 @@ const quickLoginStudent = async () => {
           <Sparkles class="w-6 h-6 text-sky-400" />
         </div>
         <h3 class="text-xl font-extrabold text-slate-900 tracking-tight pt-2">
-          {{ mode === 'login' ? 'Masuk ke ChemistFun' : 'Daftar Akun Baru' }}
+          {{ mode === 'login' ? 'Masuk ke KimiFun' : 'Daftar Akun Baru' }}
         </h3>
         <p class="text-xs text-slate-400">Platform Laboratorium Maya & Pembelajaran Kimia Interaktif</p>
       </div>

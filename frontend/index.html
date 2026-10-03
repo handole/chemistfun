@@ -4,11 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/beaker.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ChemistFun - Laboratorium Maya & Platform Kimia Interaktif</title>
+    <title>KimiFun - Laboratorium Maya & Platform Kimia Interaktif</title>
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- MathJax 3 configuration and script -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          packages: {'[+]': ['mhchem']}
+        },
+        loader: { load: ['[tex]/mhchem'] },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body class="bg-[#F6F8FC] text-slate-800 antialiased font-['Plus_Jakarta_Sans',sans-serif]">
     <div id="app"></div>

@@ -26,7 +26,7 @@ const aiError = ref('')
 const aiSuccessMsg = ref('')
 
 // Virtual Lab Form State
-const labStatus = ref('draft')
+const labStatus = ref('ready')
 const aiPromptHistory = ref('')
 const config = ref({
   lab_title: 'Simulasi Reaksi Asam Basa',
@@ -45,34 +45,86 @@ const config = ref({
 const currentVolume = ref(15)
 const isSimulating = ref(false)
 
+const eqVolume = computed(() => {
+  const m1 = config.value.solution_molarity || 0.1
+  const m2 = config.value.titrant_molarity || 0.1
+  const v1 = 25 // 25 mL analit di erlenmeyer
+  return +((m1 * v1) / (m2 || 1)).toFixed(1)
+})
+
 const liquidColor = computed(() => {
-  // If volume >= 25ml, neutralize and turn pink
-  if (currentVolume.value >= 25) {
-    return 'rgba(244, 114, 182, 0.75)' // Pink
+  if (currentVolume.value >= eqVolume.value) {
+    return config.value.color_end || 'rgba(244, 114, 182, 0.8)'
   }
-  return 'rgba(224, 242, 254, 0.5)' // Clear light blue
+  return config.value.color_start || 'rgba(224, 242, 254, 0.5)'
 })
 
 const phValue = computed(() => {
-  if (currentVolume.value < 25) {
-    const diff = (25 - currentVolume.value) / 25
-    return (1.0 + (1 - diff) * 5.0).toFixed(1)
-  } else if (currentVolume.value === 25) {
+  const eq = eqVolume.value || 25
+  if (currentVolume.value < eq) {
+    const diff = (eq - currentVolume.value) / eq
+    return (1.0 + (1 - diff) * 6.0).toFixed(1)
+  } else if (Math.abs(currentVolume.value - eq) < 0.2) {
     return '7.0'
   } else {
-    const diff = (currentVolume.value - 25) / 25
-    return (7.0 + diff * 6.0).toFixed(1)
+    const diff = (currentVolume.value - eq) / (config.value.max_volume_ml || 50)
+    return Math.min(14.0, +(7.0 + diff * 7.0)).toFixed(1)
   }
 })
 
 const loadClassesAndMaterials = async () => {
   loading.value = true
   try {
-    const cls = await api.classes.list()
-    classes.value = cls || []
-    if (classes.value.length > 0) {
-      selectedClassId.value = classes.value[0].id
-      await loadMaterialsForClass(selectedClassId.value)
+    const allMats = []
+    
+    // 1. Fetch from modules across grades
+    for (const lvl of ['X', 'XI', 'XII']) {
+      try {
+        const mods = await api.content.listModulesByGrade(lvl)
+        for (const m of mods || []) {
+          const mats = await api.content.listMaterials(m.id)
+          allMats.push(...(mats || []))
+        }
+      } catch (e) {}
+    }
+
+    // 2. Fetch classes if any
+    try {
+      const cls = await api.classes.list()
+      classes.value = cls || []
+      for (const c of classes.value) {
+        try {
+          const mods = await api.content.listModules(c.id)
+          for (const m of mods || []) {
+            const mats = await api.content.listMaterials(m.id)
+            allMats.push(...(mats || []))
+          }
+        } catch (e) {}
+      }
+    } catch (e) {}
+
+    // Deduplicate
+    const unique = []
+    const seen = new Set()
+    for (const m of allMats) {
+      if (!seen.has(m.uuid)) {
+        seen.add(m.uuid)
+        unique.push(m)
+      }
+    }
+
+    if (props.initialMaterial && !seen.has(props.initialMaterial.uuid)) {
+      unique.unshift(props.initialMaterial)
+    }
+
+    materialsList.value = unique
+
+    if (props.initialMaterial) {
+      const found = unique.find(m => m.uuid === props.initialMaterial.uuid) || props.initialMaterial
+      await selectMaterial(found)
+      activeLabTab.value = 'titration'
+    } else if (unique.length > 0) {
+      await selectMaterial(unique[0])
     }
   } catch (err) {
     console.error('Gagal mengambil data:', err)
@@ -81,29 +133,10 @@ const loadClassesAndMaterials = async () => {
   }
 }
 
-const loadMaterialsForClass = async (classId) => {
-  try {
-    const mods = await api.content.listModules(classId)
-    const allMats = []
-    for (const m of mods || []) {
-      const mats = await api.content.listMaterials(m.id)
-      allMats.push(...(mats || []))
-    }
-    materialsList.value = allMats
-    if (props.initialMaterial) {
-      const found = materialsList.value.find(m => m.uuid === props.initialMaterial.uuid)
-      if (found) selectMaterial(found)
-      else if (materialsList.value.length > 0) selectMaterial(materialsList.value[0])
-    } else if (materialsList.value.length > 0) {
-      selectMaterial(materialsList.value[0])
-    }
-  } catch (err) {
-    console.error('Gagal memuat materi:', err)
-  }
-}
-
 const selectMaterial = async (mat) => {
+  if (!mat) return
   selectedMaterial.value = mat
+  aiPromptInput.value = mat.title ? `Praktikum reaksi dan simulasi untuk ${mat.title}` : ''
   try {
     const lab = await api.content.getLab(mat.uuid)
     if (lab) {
@@ -114,14 +147,21 @@ const selectMaterial = async (mat) => {
       }
     }
   } catch (err) {
-    // If not found, use default config
-    labStatus.value = 'draft'
+    // If not found, prepare ready-to-save custom lab for this material
+    labStatus.value = 'ready'
+    config.value.lab_title = `Simulasi Praktikum: ${mat.title}`
   }
 }
 
-watch(selectedClassId, (newId) => {
-  if (newId) loadMaterialsForClass(newId)
-})
+watch(() => props.initialMaterial, async (newMat) => {
+  if (newMat) {
+    if (!materialsList.value.some(m => m.uuid === newMat.uuid)) {
+      materialsList.value.unshift(newMat)
+    }
+    await selectMaterial(newMat)
+    activeLabTab.value = 'titration'
+  }
+}, { immediate: true })
 
 const saveLabConfig = async () => {
   if (!selectedMaterial.value) return
@@ -132,10 +172,10 @@ const saveLabConfig = async () => {
       material_id: selectedMaterial.value.id,
       ai_prompt_history: aiPromptHistory.value,
       config_data: config.value,
-      status: labStatus.value
+      status: labStatus.value || 'ready'
     })
     saveSuccess.value = true
-    setTimeout(() => (saveSuccess.value = false), 3000)
+    setTimeout(() => (saveSuccess.value = false), 4000)
   } catch (err) {
     alert('Gagal menyimpan konfigurasi lab: ' + err.message)
   } finally {
@@ -393,13 +433,18 @@ onMounted(() => {
           </span>
           <span v-else class="text-xs text-slate-400">Siap diterapkan ke dashboard siswa</span>
 
+          <div v-if="saveSuccess" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-semibold flex items-center gap-2">
+            <Check class="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Konfigurasi Lab berhasil disimpan dan aktif! Siswa yang mengakses materi ini sekarang dapat langsung menjalankan simulasi praktikum ini.</span>
+          </div>
+
           <button 
             @click="saveLabConfig"
             :disabled="saving"
             class="inline-flex items-center gap-2 bg-chemist-dark hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50"
           >
             <Save class="w-4 h-4 text-emerald-400" />
-            <span>{{ saving ? 'Menyimpan...' : 'Simpan Konfigurasi' }}</span>
+            <span>{{ saving ? 'Menyimpan...' : 'Simpan & Publikasikan ke Siswa' }}</span>
           </button>
         </div>
       </div>

@@ -6,9 +6,7 @@ import {
   FlaskConical, 
   CheckSquare, 
   BarChart3, 
-  Settings,
-  Sparkles,
-  ExternalLink
+  Settings
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -96,34 +94,5 @@ const setTab = (id) => {
         </nav>
       </div>
     </div>
-
-    <!-- Bottom: Premium / Info Card (From mockup) -->
-    <div class="mt-6">
-      <div class="bg-gradient-to-br from-chemist-dark via-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-md relative overflow-hidden">
-        <!-- Background decorative bubble -->
-        <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-indigo-500/20 rounded-full blur-xl pointer-events-none"></div>
-
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-6 h-6 rounded-lg bg-indigo-500/30 flex items-center justify-center">
-            <Sparkles class="w-3.5 h-3.5 text-indigo-300" />
-          </div>
-          <span class="text-xs font-bold text-indigo-200 uppercase tracking-wider">CHEMISTFUN LAB</span>
-        </div>
-
-        <p class="text-xs text-slate-300 font-medium leading-relaxed">
-          Simulasi eksperimen reaksi kimia dan asesmen radar siap digunakan.
-        </p>
-
-        <a 
-          href="/docs" 
-          target="_blank"
-          class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-sky-400 hover:text-sky-300 transition-colors"
-        >
-          <span>Buka OpenAPI Swagger</span>
-          <ExternalLink class="w-3 h-3" />
-        </a>
-      </div>
-    </div>
   </aside>
 </template>
-

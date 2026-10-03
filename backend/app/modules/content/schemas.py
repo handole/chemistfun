@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.modules.classes.models import GradeLevel
 from app.modules.content.models import VirtualLabStatus
 
 
@@ -14,18 +15,19 @@ class ModuleBase(BaseModel):
 
 
 class ModuleCreate(ModuleBase):
-    class_id: int = Field(..., description="ID of the parent class")
+    grade_level: GradeLevel = Field(default=GradeLevel.X, description="Grade level: X, XI, or XII")
 
 
 class ModuleUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=255)
+    grade_level: Optional[GradeLevel] = None
     order_index: Optional[int] = Field(None, ge=0)
 
 
 class ModuleResponse(ModuleBase):
     id: int
     uuid: UUID
-    class_id: int
+    grade_level: GradeLevel
 
     model_config = ConfigDict(from_attributes=True)
 

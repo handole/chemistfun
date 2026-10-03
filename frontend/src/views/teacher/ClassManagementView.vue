@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Plus, Users, Copy, Check, Trash2, UserX, AlertCircle } from 'lucide-vue-next'
+import { Plus, Users, Copy, Check, Trash2, UserX, AlertCircle, UserPlus, Search, X } from 'lucide-vue-next'
 import { api } from '@/api/client'
 
 const props = defineProps({
@@ -16,9 +16,18 @@ const loadingStudents = ref(false)
 const copiedCode = ref(null)
 
 const newClassName = ref('')
+const newClassGradeLevel = ref('X')
 const newClassCode = ref('')
 const createError = ref('')
 const isSubmitting = ref(false)
+
+// Add Student Modal State
+const showAddStudentModal = ref(false)
+const allStudents = ref([])
+const loadingAllStudents = ref(false)
+const studentSearchQuery = ref('')
+const enrollingStudentId = ref(null)
+const addStudentError = ref('')
 
 const loadClasses = async () => {
   loading.value = true
@@ -61,6 +70,7 @@ const handleCreateClass = async () => {
   try {
     const res = await api.classes.create({
       name: newClassName.value.trim(),
+      grade_level: newClassGradeLevel.value,
       enrollment_code: newClassCode.value.trim()
     })
     classes.value.push(res)
@@ -117,6 +127,36 @@ const copyCode = (code) => {
   setTimeout(() => (copiedCode.value = null), 2000)
 }
 
+const openAddStudentModal = async () => {
+  addStudentError.value = ''
+  studentSearchQuery.value = ''
+  showAddStudentModal.value = true
+  loadingAllStudents.value = true
+  try {
+    const res = await api.users.list('student')
+    allStudents.value = res || []
+  } catch (err) {
+    console.error('Gagal mengambil daftar pengguna siswa:', err)
+    addStudentError.value = 'Gagal memuat daftar siswa: ' + err.message
+  } finally {
+    loadingAllStudents.value = false
+  }
+}
+
+const handleDirectEnroll = async (student) => {
+  if (!selectedClass.value) return
+  enrollingStudentId.value = student.id
+  addStudentError.value = ''
+  try {
+    await api.classes.enrollStudent(selectedClass.value.uuid, student.id)
+    enrolledStudents.value.push(student)
+  } catch (err) {
+    addStudentError.value = err.message || 'Gagal menambahkan siswa ke kelas.'
+  } finally {
+    enrollingStudentId.value = null
+  }
+}
+
 onMounted(() => {
   loadClasses()
 })
@@ -169,7 +209,10 @@ onMounted(() => {
 
           <div class="flex items-start justify-between gap-3">
             <div>
-              <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-chemist-primary rounded-md uppercase">Kimia</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-chemist-primary rounded-md uppercase">Kimia</span>
+                <span class="text-[10px] font-black px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md uppercase">Kelas {{ cls.grade_level || 'X' }}</span>
+              </div>
               <h4 class="font-bold text-slate-900 text-base mt-1.5">{{ cls.name }}</h4>
             </div>
             <button 
@@ -218,12 +261,21 @@ onMounted(() => {
           </div>
 
           <!-- Students List Header -->
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2">
               <Users class="w-4 h-4 text-chemist-primary" />
               <h4 class="font-bold text-slate-800 text-sm">Siswa Terdaftar ({{ enrolledStudents.length }})</h4>
             </div>
-            <span class="text-xs text-slate-400">Siswa bergabung menggunakan kode di atas</span>
+            <div class="flex items-center gap-2">
+              <button
+                @click="openAddStudentModal"
+                class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-chemist-primary border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+                title="Masukkan siswa langsung ke kelas ini"
+              >
+                <UserPlus class="w-3.5 h-3.5" />
+                <span>+ Tambah Siswa</span>
+              </button>
+            </div>
           </div>
 
           <!-- Students Table / List -->
@@ -282,13 +334,26 @@ onMounted(() => {
 
         <div class="space-y-4 text-sm">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Kelas</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Kelas / Sub-Kelas</label>
             <input 
               v-model="newClassName"
               type="text" 
-              placeholder="Contoh: Kimia X IPA 1 - SMAN 1" 
+              placeholder="Contoh: X-1, X-2, atau XI-IPA-A" 
               class="w-full bg-slate-50 focus:bg-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary focus:ring-2 focus:ring-chemist-primary/20 outline-none"
             />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Tingkatan Level Kelas</label>
+            <select
+              v-model="newClassGradeLevel"
+              class="w-full bg-slate-50 focus:bg-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none font-semibold text-slate-800"
+            >
+              <option value="X">Kelas X (Sepuluh)</option>
+              <option value="XI">Kelas XI (Sebelas)</option>
+              <option value="XII">Kelas XII (Dua Belas)</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Kelas ini otomatis mewarisi seluruh materi kurikulum level tersebut.</p>
           </div>
 
           <div>
@@ -325,6 +390,95 @@ onMounted(() => {
             class="px-5 py-2 rounded-xl text-xs font-bold bg-chemist-dark hover:bg-slate-900 text-white disabled:opacity-50 transition-all shadow-md"
           >
             {{ isSubmitting ? 'Menyimpan...' : 'Simpan Kelas' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Tambah Siswa Langsung oleh Guru -->
+    <div v-if="showAddStudentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-elevated space-y-4 max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Tambahkan Siswa ke Kelas</h3>
+            <p class="text-xs text-slate-500">Kelas: <strong class="text-slate-800">{{ selectedClass?.name }}</strong></p>
+          </div>
+          <button @click="showAddStudentModal = false" class="p-1 rounded-xl text-slate-400 hover:text-slate-700">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div v-if="addStudentError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2">
+          <AlertCircle class="w-4 h-4 shrink-0" />
+          <span>{{ addStudentError }}</span>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative">
+          <Search class="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <input
+            v-model="studentSearchQuery"
+            type="text"
+            placeholder="Cari nama atau email siswa..."
+            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-chemist-primary"
+          />
+        </div>
+
+        <!-- Student List -->
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[220px]">
+          <div v-if="loadingAllStudents" class="text-center py-8 text-xs text-slate-400">
+            Memuat daftar seluruh siswa...
+          </div>
+          <div v-else-if="allStudents.length === 0" class="text-center py-8 text-xs text-slate-400">
+            Belum ada akun siswa terdaftar dalam sistem.
+          </div>
+          <template v-else>
+            <div
+              v-for="st in allStudents.filter(s => 
+                !studentSearchQuery.trim() || 
+                s.full_name?.toLowerCase().includes(studentSearchQuery.toLowerCase()) || 
+                s.email?.toLowerCase().includes(studentSearchQuery.toLowerCase())
+              )"
+              :key="st.id"
+              class="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center">
+                  {{ st.full_name?.substring(0, 2).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-slate-900">{{ st.full_name }}</p>
+                  <p class="text-[11px] text-slate-400">{{ st.email }}</p>
+                </div>
+              </div>
+
+              <!-- Button / Status -->
+              <span
+                v-if="enrolledStudents.some(es => es.id === st.id)"
+                class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1"
+              >
+                <Check class="w-3.5 h-3.5" />
+                <span>Terdaftar</span>
+              </span>
+              <button
+                v-else
+                @click="handleDirectEnroll(st)"
+                :disabled="enrollingStudentId === st.id"
+                class="px-3 py-1.5 bg-chemist-dark hover:bg-slate-900 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-all shadow-2xs flex items-center gap-1"
+              >
+                <UserPlus class="w-3.5 h-3.5" />
+                <span>{{ enrollingStudentId === st.id ? 'Menambahkan...' : 'Tambahkan' }}</span>
+              </button>
+            </div>
+          </template>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end">
+          <button
+            @click="showAddStudentModal = false"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+          >
+            Selesai
           </button>
         </div>
       </div>

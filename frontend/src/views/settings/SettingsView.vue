@@ -32,7 +32,7 @@ const emit = defineEmits(['logout', 'refresh'])
 
         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
           <span class="text-slate-400 font-medium">Alamat Email:</span>
-          <p class="font-bold text-slate-900 text-sm mt-0.5">{{ user?.email || 'guru@chemistfun.com' }}</p>
+          <p class="font-bold text-slate-900 text-sm mt-0.5">{{ user?.email || 'guru@KimiFun.com' }}</p>
         </div>
 
         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
@@ -71,7 +71,7 @@ const emit = defineEmits(['logout', 'refresh'])
               {{ backendOnline ? 'Layanan FastAPI & PostgreSQL Terhubung Normal' : 'Koneksi API Backend Terputus' }}
             </p>
             <p class="text-[11px]" :class="backendOnline ? 'text-emerald-700' : 'text-rose-700'">
-              URL: http://localhost:8000 (Docker network chemistfun_network)
+              URL: http://localhost:8000 (Docker network KimiFun_network)
             </p>
           </div>
         </div>

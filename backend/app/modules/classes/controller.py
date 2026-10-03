@@ -63,6 +63,7 @@ class ClassController:
         db_obj = Class(
             teacher_id=obj_in.teacher_id,
             name=obj_in.name,
+            grade_level=obj_in.grade_level,
             enrollment_code=code,
         )
         db.add(db_obj)

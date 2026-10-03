@@ -1,6 +1,6 @@
-# Frontend ChemistFun (Vue.js 3)
+# Frontend KimiFun (Vue.js 3)
 
-Folder ini disiapkan untuk aplikasi antarmuka pengguna (Frontend) ChemistFun menggunakan **Vue.js 3**.
+Folder ini disiapkan untuk aplikasi antarmuka pengguna (Frontend) KimiFun menggunakan **Vue.js 3**.
 
 ## Status
 > **Belum Di-develop**: Bagian frontend belum dibuat.
@@ -38,7 +38,7 @@ frontend:
   build:
     context: ./frontend
     dockerfile: Dockerfile
-  container_name: chemistfun_frontend
+  container_name: KimiFun_frontend
   restart: unless-stopped
   ports:
     - "5173:5173"
