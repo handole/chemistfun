@@ -1,22 +1,10 @@
-import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-# Database URL support for asyncpg
-raw_url = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/KimiFun_db",
-)
+from app.core.config import ASYNC_DATABASE_URL
 
-if raw_url.startswith("postgresql://"):
-    ASYNC_DATABASE_URL = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-elif raw_url.startswith("postgres://"):
-    ASYNC_DATABASE_URL = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
-else:
-    ASYNC_DATABASE_URL = raw_url
-
-# Async Engine setup
+# Async Engine setup using single source of truth from config
 engine = create_async_engine(ASYNC_DATABASE_URL, pool_pre_ping=True)
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

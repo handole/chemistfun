@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { 
   BookOpen, 
   FlaskConical, 
@@ -16,11 +16,13 @@ import {
   Pause,
   RefreshCw,
   Check,
-  Droplets
+  Droplets,
+  ChevronLeft
 } from 'lucide-vue-next'
 import { api } from '@/api/client'
 import StoichiometryLab from '@/views/virtual-lab/StoichiometryLab.vue'
 import StudentQuizTake from '@/views/student/StudentQuizTake.vue'
+import { typesetMath } from '@/utils/mathjax'
 
 const props = defineProps({
   user: Object
@@ -104,8 +106,67 @@ const selectModule = async (mod) => {
     } catch (e) {
       activeQuiz.value = null
     }
+
+    nextTick(() => {
+      typesetMath()
+    })
   } catch (err) {
     console.error('Gagal memuat materi:', err)
+  }
+}
+
+// Stage navigation for modules & materials
+const currentModuleIndex = computed(() => {
+  if (!selectedModule.value || modules.value.length === 0) return -1
+  return modules.value.findIndex(m => m.id === selectedModule.value.id)
+})
+
+const prevModule = computed(() => {
+  const idx = currentModuleIndex.value
+  return idx > 0 ? modules.value[idx - 1] : null
+})
+
+const nextModule = computed(() => {
+  const idx = currentModuleIndex.value
+  return idx >= 0 && idx < modules.value.length - 1 ? modules.value[idx + 1] : null
+})
+
+const goToPrevModule = () => {
+  if (prevModule.value) {
+    selectModule(prevModule.value)
+  }
+}
+
+const goToNextModule = () => {
+  if (nextModule.value) {
+    selectModule(nextModule.value)
+  }
+}
+
+const currentMaterialIndex = computed(() => {
+  if (!selectedMaterial.value || materials.value.length === 0) return -1
+  return materials.value.findIndex(m => m.id === selectedMaterial.value.id)
+})
+
+const prevMaterial = computed(() => {
+  const idx = currentMaterialIndex.value
+  return idx > 0 ? materials.value[idx - 1] : null
+})
+
+const nextMaterial = computed(() => {
+  const idx = currentMaterialIndex.value
+  return idx >= 0 && idx < materials.value.length - 1 ? materials.value[idx + 1] : null
+})
+
+const goToPrevMaterial = () => {
+  if (prevMaterial.value) {
+    selectedMaterial.value = prevMaterial.value
+  }
+}
+
+const goToNextMaterial = () => {
+  if (nextMaterial.value) {
+    selectedMaterial.value = nextMaterial.value
   }
 }
 
@@ -274,14 +335,22 @@ onMounted(() => {
         </p>
       </div>
 
-      <!-- Active Class Badge (Jika sudah punya kelas) -->
-      <div v-if="classes.length > 0" class="w-full md:w-auto bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-chemist-primary/10 text-chemist-primary flex items-center justify-center font-bold">
+      <!-- Active Class Badge / Selector (Jika punya kelas) -->
+      <div v-if="classes.length > 0" class="w-full md:w-auto bg-slate-50 border border-slate-200/80 p-3 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-chemist-primary/10 text-chemist-primary flex items-center justify-center font-bold shrink-0">
           <BookOpen class="w-5 h-5" />
         </div>
         <div>
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kelas Terdaftar</span>
-          <span class="text-sm font-bold text-slate-900 block">{{ selectedClass?.name || classes[0].name }}</span>
+          <select
+            v-if="classes.length > 1"
+            :value="selectedClass?.id"
+            @change="(e) => selectClass(classes.find(c => c.id === parseInt(e.target.value)))"
+            class="bg-transparent font-bold text-slate-900 text-sm outline-none cursor-pointer pr-4"
+          >
+            <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+          </select>
+          <span v-else class="text-sm font-bold text-slate-900 block">{{ selectedClass?.name || classes[0].name }}</span>
           <span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
             <CheckCircle2 class="w-3 h-3" />
             <span>Kelas {{ selectedClass?.grade_level || classes[0].grade_level }} Kimia Aktif</span>
@@ -370,50 +439,50 @@ onMounted(() => {
       </div>
 
       <!-- Class & Modules Grid -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <!-- Left: Class & Module Selector -->
-        <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Pilih Kelas</label>
-            <select
-              :value="selectedClass?.id"
-              @change="(e) => selectClass(classes.find(c => c.id === parseInt(e.target.value)))"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none"
-            >
-              <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
-          </div>
-
-          <div>
-            <h4 class="text-xs font-bold text-slate-700 mb-2">Daftar Modul Belajar</h4>
-            <div class="space-y-1.5 max-h-72 overflow-y-auto">
-              <button
-                v-for="mod in modules"
-                :key="mod.id"
-                @click="selectModule(mod)"
-                :class="[
-                  'w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center justify-between',
-                  selectedModule?.id === mod.id
-                    ? 'bg-slate-100 text-slate-900 font-bold border border-slate-300'
-                    : 'text-slate-600 hover:bg-slate-50 border border-transparent'
-                ]"
-              >
-                <span>{{ mod.title }}</span>
-                <ChevronRight class="w-3.5 h-3.5 text-slate-400" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Materials Content -->
-        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div v-else class="space-y-4">
+        <!-- Materials Content -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-bold text-slate-900">{{ selectedModule?.title || 'Pilih Modul' }}</h3>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-chemist-primary px-2.5 py-1 rounded-md">
+                  Kelas {{ selectedClass?.grade_level || classes[0]?.grade_level }}
+                </span>
+                <span v-if="modules.length > 0" class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">
+                  Modul {{ currentModuleIndex + 1 }} dari {{ modules.length }}
+                </span>
+                <span v-if="materials.length > 0" class="text-[10px] font-semibold text-slate-400">
+                  {{ materials.length }} Materi
+                </span>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 mt-2">{{ selectedModule?.title || 'Pilih Modul' }}</h3>
               <p class="text-xs text-slate-400">Materi teori dan panduan praktikum laboratorium</p>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Quick Module Navigation & Actions -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <div v-if="modules.length > 1" class="flex items-center gap-1 bg-slate-50 border border-slate-200 p-1 rounded-xl">
+                <button
+                  @click="goToPrevModule"
+                  :disabled="!prevModule"
+                  class="p-1.5 hover:bg-white rounded-lg text-slate-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                  title="Modul Sebelumnya"
+                >
+                  <ChevronLeft class="w-4 h-4" />
+                </button>
+                <span class="text-xs font-semibold px-2 text-slate-700">
+                  Modul {{ currentModuleIndex + 1 }}/{{ modules.length }}
+                </span>
+                <button
+                  @click="goToNextModule"
+                  :disabled="!nextModule"
+                  class="p-1.5 hover:bg-white rounded-lg text-slate-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                  title="Modul Selanjutnya"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </button>
+              </div>
+
               <button
                 v-if="activeQuiz"
                 @click="startTakingQuiz(activeQuiz)"
@@ -433,22 +502,44 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Materials list -->
+          <!-- Materials list with stage progression -->
           <div v-if="materials.length > 0" class="space-y-4">
             <div
-              v-for="mat in materials"
+              v-for="(mat, matIdx) in materials"
               :key="mat.id"
-              class="border border-slate-100 bg-slate-50/50 rounded-xl p-4 space-y-2"
+              :class="[
+                'border rounded-xl p-4 space-y-2 transition-all',
+                selectedMaterial?.id === mat.id
+                  ? 'border-chemist-primary/60 bg-blue-50/20 ring-1 ring-chemist-primary/30'
+                  : 'border-slate-100 bg-slate-50/50'
+              ]"
             >
               <div class="flex items-center justify-between">
-                <h4 class="text-sm font-bold text-slate-800">{{ mat.title }}</h4>
-                <button
-                  @click="openVirtualLab(mat)"
-                  class="text-xs text-chemist-primary hover:underline font-semibold flex items-center gap-1"
-                >
-                  <span>Mulai Praktikum</span>
-                  <ArrowRight class="w-3 h-3" />
-                </button>
+                <div class="flex items-center gap-2">
+                  <span 
+                    class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                    :class="selectedMaterial?.id === mat.id ? 'bg-chemist-primary text-white' : 'bg-slate-200 text-slate-600'"
+                  >
+                    {{ matIdx + 1 }}
+                  </span>
+                  <h4 class="text-sm font-bold text-slate-800">{{ mat.title }}</h4>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button
+                    v-if="selectedMaterial?.id !== mat.id"
+                    @click="selectedMaterial = mat"
+                    class="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+                  >
+                    Buka Rincian
+                  </button>
+                  <button
+                    @click="openVirtualLab(mat)"
+                    class="text-xs text-chemist-primary hover:underline font-semibold flex items-center gap-1"
+                  >
+                    <span>Mulai Praktikum</span>
+                    <ArrowRight class="w-3 h-3" />
+                  </button>
+                </div>
               </div>
 
               <div 
@@ -457,6 +548,52 @@ onMounted(() => {
                 v-html="mat.content_html"
               ></div>
               <p v-else class="text-xs text-slate-400 italic">Belum ada penjelasan tertulis pada materi ini.</p>
+            </div>
+
+            <!-- Material Stage Navigation Controls -->
+            <div class="pt-2 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+              <button
+                @click="goToPrevMaterial"
+                :disabled="!prevMaterial"
+                class="px-3 py-1.5 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition-all shadow-2xs"
+              >
+                <ChevronLeft class="w-3.5 h-3.5" />
+                <span>Materi Sebelumnya</span>
+              </button>
+
+              <span class="text-xs font-medium text-slate-500">
+                Materi <b>{{ currentMaterialIndex + 1 }}</b> dari <b>{{ materials.length }}</b>
+              </span>
+
+              <button
+                v-if="nextMaterial"
+                @click="goToNextMaterial"
+                class="px-3.5 py-1.5 bg-chemist-primary hover:bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+              >
+                <span>Materi Selanjutnya</span>
+                <ChevronRight class="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                v-else-if="nextModule"
+                @click="goToNextModule"
+                class="px-3.5 py-1.5 bg-chemist-dark hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+              >
+                <span>Lanjut ke Modul Berikutnya</span>
+                <ChevronRight class="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                v-else-if="activeQuiz"
+                @click="startTakingQuiz(activeQuiz)"
+                class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+              >
+                <CheckSquare class="w-3.5 h-3.5" />
+                <span>Selesai Belajar, Ikuti Kuis</span>
+              </button>
+              <div v-else class="text-xs font-bold text-emerald-600">
+                ✓ Selesai Semua Materi
+              </div>
             </div>
           </div>
 
@@ -644,7 +781,7 @@ onMounted(() => {
           <!-- Right: Observation & Analysis Sheet (5 Cols) -->
           <div class="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
             <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Lembar Laporan Praktikum Siswa</span>
+              <span>Lembar Data Pengamatan Praktikum</span>
             </h4>
 
             <div class="space-y-3 text-xs">
@@ -677,28 +814,25 @@ onMounted(() => {
                 <span class="font-semibold text-slate-800">{{ customLabConfig.config_data?.indicator_type || 'Phenolphthalein (PP)' }}</span>
               </div>
 
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Catatan Analisis & Kesimpulan Praktikum</label>
-                <textarea 
-                  rows="4" 
-                  v-model="studentNotes"
-                  placeholder="Tuliskan data volume saat titik ekuivalen tercapai, perubahan warna larutan, dan perhitungan konsentrasi analit..." 
-                  class="w-full bg-slate-50 focus:bg-white p-3 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none text-xs text-slate-800 transition-all font-sans"
-                ></textarea>
+              <!-- Titration Telemetry Data -->
+              <div class="p-3 bg-blue-50/50 border border-blue-200/60 rounded-xl space-y-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Hasil Pengamatan Buret</span>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span class="text-[10px] text-slate-400 block">Volume Terukur</span>
+                    <span class="font-mono font-bold text-slate-900 text-sm">{{ studentLabVolume }} mL</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] text-slate-400 block">pH Larutan</span>
+                    <span class="font-mono font-bold text-slate-900 text-sm">{{ studentPhValue }}</span>
+                  </div>
+                </div>
+                <div class="pt-1.5 border-t border-blue-200/40">
+                  <span class="text-[11px] font-medium text-slate-700">
+                    Status: <b :class="studentLabVolume >= studentEqVolume ? 'text-pink-600' : 'text-blue-600'">{{ studentReactionStatus }}</b>
+                  </span>
+                </div>
               </div>
-
-              <div v-if="studentNotesSaved" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-semibold flex items-center gap-1.5 text-xs">
-                <Check class="w-3.5 h-3.5 text-emerald-600" />
-                <span>Catatan pengamatan praktikum berhasil disimpan!</span>
-              </div>
-
-              <button
-                @click="saveStudentNotes"
-                class="w-full py-2.5 px-4 bg-chemist-dark hover:bg-slate-900 text-white rounded-xl font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5"
-              >
-                <Check class="w-3.5 h-3.5 text-emerald-400" />
-                <span>Simpan Catatan Praktikum</span>
-              </button>
             </div>
           </div>
         </div>
