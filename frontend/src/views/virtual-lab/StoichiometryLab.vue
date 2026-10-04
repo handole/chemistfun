@@ -616,31 +616,31 @@ onUnmounted(() => {
             </span>
           </p>
 
-          <div class="flex gap-2">
+          <div class="space-y-2">
             <input
               v-if="currentStage === 1"
               type="number"
               step="0.01"
               v-model="s1Answer"
               placeholder="Nilai mol..."
-              class="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 outline-none"
+              class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 outline-none"
             />
             <select
               v-else-if="currentStage === 2"
               v-model="s2Answer"
-              class="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800 outline-none"
+              class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800 outline-none"
             >
               <option value="">-- Pilih Jawaban --</option>
               <option value="false">Tidak, massa berkurang karena gas lepas</option>
               <option value="true">Ya, massa selalu tetap di segala wadah</option>
             </select>
-            <div v-else-if="currentStage === 3" class="flex-1 text-xs text-slate-400 py-1">
+            <div v-else-if="currentStage === 3" class="text-xs text-slate-400 py-1">
               Atur koefisien a, b, c di atas lalu periksa.
             </div>
             <select
               v-else-if="currentStage === 4"
               v-model="s4Answer"
-              class="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800 outline-none"
+              class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800 outline-none"
             >
               <option value="H2">Gas H₂</option>
               <option value="O2">Gas O₂</option>
@@ -651,17 +651,17 @@ onUnmounted(() => {
               step="0.001"
               v-model="s5Answer"
               placeholder="Massa (gram)..."
-              class="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 outline-none"
+              class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 outline-none"
             />
 
             <button
               @click="verifyAnswer"
               :disabled="verifying"
-              class="px-3.5 py-1.5 bg-chemist-primary hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0"
+              class="w-full py-2 bg-chemist-primary hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs"
             >
               <RefreshCw v-if="verifying" class="w-3.5 h-3.5 animate-spin" />
               <Check v-else class="w-3.5 h-3.5" />
-              <span>Periksa</span>
+              <span>Periksa Jawaban</span>
             </button>
           </div>
 
