@@ -18,6 +18,7 @@ from app.modules.assessment.schemas import (
     QuizUpdate,
     StudentAnswerResponse,
     StudentAnswerSave,
+    StudentAnswerSaveResponse,
     StudentQuizAttemptCreate,
     StudentQuizAttemptResponse,
 )
@@ -425,7 +426,7 @@ async def submit_attempt(
 
 @router.post(
     "/answers",
-    response_model=StudentAnswerResponse,
+    response_model=StudentAnswerSaveResponse,
     status_code=status.HTTP_200_OK,
     summary="Auto-save answer during an ongoing attempt (Student owner)",
 )

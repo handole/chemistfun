@@ -25,11 +25,11 @@ FRONTEND_URL = "http://127.0.0.1:5173"
 
 # Test endpoints
 ENDPOINTS = {
-    "health": "/health",
-    "auth_login": "/auth/login",
-    "modules_list": "/content/modules?grade_level=X",
-    "classes_list": "/classes/",
-    "users_students": "/users/?role=student",
+    "health": "/api/health",
+    "auth_login": "/api/auth/login",
+    "modules_list": "/api/content/modules?grade_level=X",
+    "classes_list": "/api/classes/",
+    "users_students": "/api/users/?role=student",
 }
 
 

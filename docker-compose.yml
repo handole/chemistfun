@@ -34,6 +34,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-KimiFun_db}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      SECRET_KEY: ${SECRET_KEY:-KimiFun-secret-key-development-1234567890}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:

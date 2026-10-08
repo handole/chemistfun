@@ -25,7 +25,7 @@ async def test_health_endpoint():
 async def test_auth_login():
     """Test teacher login endpoint."""
     response = client.post(
-        "/auth/login",
+        "/api/auth/login",
         json={"email": "guru@KimiFun.com", "password": "password123"}
     )
     assert response.status_code in [200, 401]  # 401 if no user setup
@@ -34,7 +34,7 @@ async def test_auth_login():
 @pytest.mark.asyncio
 async def test_list_modules():
     """Test listing modules endpoint."""
-    response = client.get("/content/modules?grade_level=X")
+    response = client.get("/api/content/modules?grade_level=X")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -43,7 +43,7 @@ async def test_list_modules():
 @pytest.mark.asyncio
 async def test_list_materials():
     """Test listing materials by module."""
-    response = client.get("/content/materials?module_id=1")
+    response = client.get("/api/content/materials?module_id=1")
     assert response.status_code in [200, 404]
 
 
@@ -51,7 +51,7 @@ async def test_list_materials():
 async def test_create_material():
     """Test creating a new material."""
     response = client.post(
-        "/content/materials",
+        "/api/content/materials",
         json={
             "module_id": 1,
             "title": "Test Materi Kimia",
@@ -67,7 +67,7 @@ async def test_virtual_lab_config():
     """Test virtual lab configuration endpoints."""
     # Test upsert lab config
     response = client.put(
-        "/content/materials/1/lab",
+        "/api/content/materials/1/lab",
         json={
             "material_id": 1,
             "ai_prompt_history": "Test prompt",
@@ -90,14 +90,14 @@ async def test_virtual_lab_config():
 @pytest.mark.asyncio
 async def test_virtual_lab_get():
     """Test getting virtual lab config."""
-    response = client.get("/content/materials/1/lab")
+    response = client.get("/api/content/materials/1/lab")
     assert response.status_code in [200, 404]
 
 
 @pytest.mark.asyncio
 async def test_classes_list():
     """Test classes listing."""
-    response = client.get("/classes/")
+    response = client.get("/api/classes/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -107,7 +107,7 @@ async def test_classes_list():
 async def test_enroll_by_code():
     """Test class enrollment by code."""
     response = client.post(
-        "/classes/enroll",
+        "/api/classes/enroll",
         json={"enrollment_code": "CHEM-ABC123", "student_id": 1}
     )
     assert response.status_code in [200, 400, 404]
@@ -116,7 +116,7 @@ async def test_enroll_by_code():
 @pytest.mark.asyncio
 async def test_list_users_students():
     """Test listing students."""
-    response = client.get("/users/?role=student")
+    response = client.get("/api/users/?role=student")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -129,7 +129,7 @@ def test_response_time_health():
     """Test health endpoint response time < 100ms."""
     import time
     start = time.time()
-    response = client.get("/health")
+    response = client.get("/api/health")
     elapsed = time.time() - start
     assert elapsed < 0.1, f"Health check took {elapsed:.3f}s"
 
@@ -138,7 +138,7 @@ def test_response_time_auth():
     """Test auth endpoint response time < 200ms."""
     import time
     start = time.time()
-    response = client.post("/auth/login", json={"email": "test@test.com", "password": "pass"})
+    response = client.post("/api/auth/login", json={"email": "test@test.com", "password": "pass"})
     elapsed = time.time() - start
     assert elapsed < 0.2, f"Auth login took {elapsed:.3f}s"
 

@@ -65,15 +65,39 @@ class ChemistryEngine:
                 h2 = float(inputs.get("h2", 4))
                 o2 = float(inputs.get("o2", 2))
 
-                limiting = "Gas H₂" if (h2 / 2.0 <= o2 / 1.0) else "Gas O₂"
+                ratio_h2 = h2 / 2.0
+                ratio_o2 = o2 / 1.0
                 ans_str = str(user_answer).strip().lower()
-                is_correct = ("h2" in ans_str if limiting == "Gas H₂" else "o2" in ans_str)
-                expected = limiting
-                explanation = (
-                    f"Tepat! Pereaksi pembatas adalah {limiting} karena rasio mol terhadap koefisiennya paling kecil."
-                    if is_correct
-                    else f"Belum tepat. Bandingkan n/koefisien: H₂ ({h2}/2 = {h2/2}) vs O₂ ({o2}/1 = {o2}). Pembatasnya adalah {limiting}."
-                )
+
+                if abs(ratio_h2 - ratio_o2) < 1e-6:
+                    limiting = "Keduanya habis (ekuivalen)"
+                    is_correct = any(term in ans_str for term in ["habis", "ekuivalen", "tidak ada", "setara", "keduanya"])
+                    expected = limiting
+                    explanation = (
+                        f"Tepat! Rasio mol/koefisien kedua pereaksi sama (H₂: {h2}/2 = {ratio_h2}, O₂: {o2}/1 = {ratio_o2}). "
+                        "Kedua pereaksi habis bereaksi bersamaan (tidak ada pereaksi pembatas)."
+                        if is_correct
+                        else f"Belum tepat. Rasio mol/koefisien sama (H₂: {h2}/2 = {ratio_h2}, O₂: {o2}/1 = {ratio_o2}). "
+                        "Maka kedua pereaksi habis bereaksi bersamaan tanpa pembatas."
+                    )
+                elif ratio_h2 < ratio_o2:
+                    limiting = "Gas H₂"
+                    is_correct = "h2" in ans_str
+                    expected = limiting
+                    explanation = (
+                        f"Tepat! Pereaksi pembatas adalah {limiting} karena rasio mol terhadap koefisiennya paling kecil ({ratio_h2} < {ratio_o2})."
+                        if is_correct
+                        else f"Belum tepat. Bandingkan n/koefisien: H₂ ({h2}/2 = {ratio_h2}) vs O₂ ({o2}/1 = {ratio_o2}). Pembatasnya adalah {limiting}."
+                    )
+                else:
+                    limiting = "Gas O₂"
+                    is_correct = "o2" in ans_str
+                    expected = limiting
+                    explanation = (
+                        f"Tepat! Pereaksi pembatas adalah {limiting} karena rasio mol terhadap koefisiennya paling kecil ({ratio_o2} < {ratio_h2})."
+                        if is_correct
+                        else f"Belum tepat. Bandingkan n/koefisien: H₂ ({h2}/2 = {ratio_h2}) vs O₂ ({o2}/1 = {ratio_o2}). Pembatasnya adalah {limiting}."
+                    )
                 return is_correct, expected, explanation
 
             elif stage == 5:

@@ -38,17 +38,17 @@ const fetchDashboardData = async () => {
     classesList.value = cls || []
     stats.value.totalClasses = classesList.value.length
 
-    // Count students from classes
-    let totalStud = 0
-    for (const c of classesList.value) {
-      try {
-        const students = await api.classes.getStudents(c.uuid)
-        totalStud += students?.length || 0
-      } catch (e) {
-        // ignore
-      }
+    // Count students from classes concurrently
+    if (classesList.value.length > 0) {
+      const studentResults = await Promise.allSettled(
+        classesList.value.map(c => api.classes.getStudents(c.uuid))
+      )
+      stats.value.totalStudents = studentResults.reduce((acc, curr) => {
+        return acc + (curr.status === 'fulfilled' && Array.isArray(curr.value) ? curr.value.length : 0)
+      }, 0)
+    } else {
+      stats.value.totalStudents = 0
     }
-    stats.value.totalStudents = totalStud
   } catch (err) {
     console.error('Failed to load dashboard data:', err)
   } finally {

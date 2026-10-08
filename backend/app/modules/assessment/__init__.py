@@ -23,6 +23,7 @@ from app.modules.assessment.schemas import (
     QuizUpdate,
     StudentAnswerResponse,
     StudentAnswerSave,
+    StudentAnswerSaveResponse,
     StudentQuizAttemptCreate,
     StudentQuizAttemptResponse,
 )
@@ -52,5 +53,6 @@ __all__ = [
     "StudentQuizAttemptCreate",
     "StudentQuizAttemptResponse",
     "StudentAnswerSave",
+    "StudentAnswerSaveResponse",
     "StudentAnswerResponse",
 ]

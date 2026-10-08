@@ -130,6 +130,16 @@ class StudentAnswerSave(BaseModel):
     selected_answer: str = Field(..., max_length=50, description="Option selected by student, e.g. 'A'")
 
 
+class StudentAnswerSaveResponse(BaseModel):
+    id: int
+    uuid: UUID
+    attempt_id: int
+    question_id: int
+    selected_answer: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class StudentAnswerResponse(BaseModel):
     id: int
     uuid: UUID
@@ -158,6 +168,7 @@ __all__ = [
     "StudentQuizAttemptCreate",
     "StudentQuizAttemptResponse",
     "StudentAnswerSave",
+    "StudentAnswerSaveResponse",
     "StudentAnswerResponse",
 ]
 
