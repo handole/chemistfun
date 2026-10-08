@@ -61,7 +61,8 @@ const startAnimation = () => {
   const loop = () => {
     const canvas = canvasRef.value
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext ? canvas.getContext('2d') : null
+    if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     particles.forEach(p => {
       p.update(canvas.width, canvas.height)
@@ -194,8 +195,12 @@ const runStage4 = () => {
   const h2 = s4H2.value
   const o2 = s4O2.value
 
-  const rH2 = (h2 / 2 <= o2 / 1) ? h2 : o2 * 2
-  const rO2 = (h2 / 2 <= o2 / 1) ? h2 / 2 : o2
+  const ratioH2 = h2 / 2
+  const ratioO2 = o2 / 1
+  const isEquivalent = Math.abs(ratioH2 - ratioO2) < 1e-6
+
+  const rH2 = (ratioH2 <= ratioO2) ? h2 : o2 * 2
+  const rO2 = (ratioH2 <= ratioO2) ? h2 / 2 : o2
   const rH2O = rH2
 
   s4Mrs.value = {
@@ -207,7 +212,9 @@ const runStage4 = () => {
     sH2O: rH2O
   }
 
-  s4Limiting.value = (h2 / 2 <= o2 / 1) ? 'Gas H₂' : 'Gas O₂'
+  s4Limiting.value = isEquivalent
+    ? 'Keduanya Habis (Ekuivalen)'
+    : (ratioH2 < ratioO2 ? 'Gas H₂' : 'Gas O₂')
   s4WaterHeight.value = Math.min((rH2O / 10) * 100, 85)
 
   particles = []

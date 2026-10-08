@@ -53,6 +53,20 @@ const formattedTime = computed(() => {
 // Result View after submit
 const quizResult = ref(null)
 
+const radarMetricsList = computed(() => {
+  if (!quizResult.value) return []
+  if (quizResult.value.radar_chart_data?.metrics && Array.isArray(quizResult.value.radar_chart_data.metrics)) {
+    return quizResult.value.radar_chart_data.metrics
+  }
+  if (quizResult.value.radar_snapshot && typeof quizResult.value.radar_snapshot === 'object') {
+    return Object.entries(quizResult.value.radar_snapshot).map(([metric_name, score_percentage]) => ({
+      metric_name: metric_name.replace(/_/g, ' '),
+      score_percentage: Number(score_percentage) || 0
+    }))
+  }
+  return []
+})
+
 const startQuizSession = async () => {
   loading.value = true
   error.value = ''
@@ -216,23 +230,23 @@ onUnmounted(() => {
       </div>
 
       <!-- Radar Assessment Snapshot -->
-      <div v-if="quizResult.radar_snapshot && Object.keys(quizResult.radar_snapshot).length > 0" class="max-w-xl mx-auto space-y-3">
+      <div v-if="radarMetricsList.length > 0" class="max-w-xl mx-auto space-y-3">
         <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
           <BarChart2 class="w-4 h-4 text-chemist-primary" />
           <span>Capaian Metrik Kompetensi Kimia:</span>
         </h4>
         <div class="space-y-2">
           <div 
-            v-for="(val, metric) in quizResult.radar_snapshot" 
-            :key="metric"
+            v-for="item in radarMetricsList" 
+            :key="item.metric_id || item.metric_name"
             class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex items-center justify-between text-xs"
           >
-            <span class="font-semibold text-slate-700 capitalize">{{ metric.replace('_', ' ') }}</span>
+            <span class="font-semibold text-slate-700 capitalize">{{ item.metric_name }}</span>
             <div class="flex items-center gap-3">
               <div class="w-32 bg-slate-200 rounded-full h-2 overflow-hidden hidden sm:block">
-                <div class="bg-chemist-primary h-2 rounded-full" :style="{ width: `${Math.min(val, 100)}%` }"></div>
+                <div class="bg-chemist-primary h-2 rounded-full" :style="{ width: `${Math.min(item.score_percentage || 0, 100)}%` }"></div>
               </div>
-              <span class="font-bold text-slate-900 w-8 text-right">{{ val }}%</span>
+              <span class="font-bold text-slate-900 w-8 text-right">{{ Math.round(item.score_percentage || 0) }}%</span>
             </div>
           </div>
         </div>
@@ -275,24 +289,23 @@ onUnmounted(() => {
           <!-- Options -->
           <div class="space-y-2.5 pt-2">
             <button
-              v-for="opt in ['A', 'B', 'C', 'D']"
-              :key="opt"
-              v-show="currentQuestion[`option_${opt.toLowerCase()}`]"
-              @click="selectAnswer(currentQuestion.id, opt)"
+              v-for="opt in (currentQuestion.options || [])"
+              :key="opt.key || opt.id"
+              @click="selectAnswer(currentQuestion.id, opt.key || opt.id)"
               :class="[
                 'w-full text-left p-3.5 rounded-2xl border transition-all flex items-start gap-3 text-xs leading-relaxed',
-                selectedAnswers[currentQuestion.id] === opt
+                selectedAnswers[currentQuestion.id] === (opt.key || opt.id)
                   ? 'border-chemist-primary bg-blue-50/70 text-slate-900 font-semibold shadow-2xs'
                   : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
               ]"
             >
               <span 
-                :class="selectedAnswers[currentQuestion.id] === opt ? 'bg-chemist-primary text-white' : 'bg-slate-100 text-slate-600'"
+                :class="selectedAnswers[currentQuestion.id] === (opt.key || opt.id) ? 'bg-chemist-primary text-white' : 'bg-slate-100 text-slate-600'"
                 class="w-6 h-6 rounded-lg font-bold flex items-center justify-center shrink-0 text-xs"
               >
-                {{ opt }}
+                {{ opt.key || opt.id }}
               </span>
-              <span class="pt-0.5">{{ currentQuestion[`option_${opt.toLowerCase()}`] }}</span>
+              <span class="pt-0.5">{{ opt.text }}</span>
             </button>
           </div>
         </div>

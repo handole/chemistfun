@@ -193,6 +193,22 @@ const finishQuizSession = async () => {
   await loadStudentAttempts()
 }
 
+const getAttemptMetrics = (att) => {
+  if (att.radar_chart_data?.metrics && Array.isArray(att.radar_chart_data.metrics)) {
+    return att.radar_chart_data.metrics.map(m => ({
+      name: m.metric_name,
+      val: Math.round(m.score_percentage || 0)
+    }))
+  }
+  if (att.radar_snapshot && typeof att.radar_snapshot === 'object') {
+    return Object.entries(att.radar_snapshot).map(([k, val]) => ({
+      name: k.replace(/_/g, ' '),
+      val: Number(val) || 0
+    }))
+  }
+  return []
+}
+
 const handleEnrollByCode = async () => {
   if (!enrollCode.value.trim()) return
   enrollLoading.value = true
@@ -954,13 +970,13 @@ onMounted(() => {
                     <span v-else class="text-slate-400 italic">Sedang berjalan</span>
                   </td>
                   <td class="py-3">
-                    <div v-if="att.radar_snapshot" class="flex flex-wrap gap-1 max-w-xs">
+                    <div v-if="getAttemptMetrics(att).length > 0" class="flex flex-wrap gap-1 max-w-xs">
                       <span 
-                        v-for="(val, k) in att.radar_snapshot" 
-                        :key="k"
+                        v-for="item in getAttemptMetrics(att)" 
+                        :key="item.name"
                         class="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded"
                       >
-                        {{ k }}: {{ val }}%
+                        {{ item.name }}: {{ item.val }}%
                       </span>
                     </div>
                     <span v-else class="text-slate-400 text-[10px]">-</span>

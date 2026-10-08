@@ -86,10 +86,15 @@ const loadQuizAndMetrics = async (moduleId) => {
     const met = await api.assessment.listMetrics(moduleId)
     metrics.value = met || []
 
-    // Quizzes: Try to find quiz by looking up attempts or questions
-    // In backend: quiz is 1-to-1 with module
-    // We can list attempts and look at quiz
-    // But since backend doesn't have listQuizzesByModule endpoint directly, we create or inspect
+    // Quiz for module
+    const existingQuiz = await api.assessment.getQuizByModule(moduleId)
+    quiz.value = existingQuiz || null
+    if (existingQuiz && existingQuiz.uuid) {
+      await loadQuestions(existingQuiz.uuid)
+    } else {
+      questions.value = []
+    }
+
     const allAttempts = await api.assessment.listAttempts()
     attempts.value = allAttempts || []
     if (attempts.value.length > 0 && !selectedAttemptForRadar.value) {
