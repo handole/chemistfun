@@ -37,6 +37,21 @@ if not SECRET_KEY:
 ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
+# CORS Configuration
+# 1. Explicit list (comma-separated): e.g. http://localhost:5173,https://my-node.ts.net,http://100.x.y.z:5173
+CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "")
+if CORS_ORIGINS_RAW.strip():
+    CORS_ORIGINS = [orig.strip() for orig in CORS_ORIGINS_RAW.split(",") if orig.strip()]
+else:
+    CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+# 2. Regex pattern for Tailscale Funnel (https://*.ts.net) and Tailscale CGNAT IP (100.64.0.0/10)
+# Default regex matches all Tailscale Funnel domains (*.ts.net) and Tailscale IP (100.x.x.x)
+CORS_ORIGIN_REGEX: str = os.getenv(
+    "CORS_ORIGIN_REGEX",
+    r"^https://.*\.ts\.net(:\d+)?$|^http://100\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"
+)
+
 # AI Service Settings (All purely read from .env)
 AI_PROVIDER: str = os.getenv("AI_PROVIDER", "").lower()
 

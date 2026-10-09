@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import Base, engine
+from app.core.config import CORS_ORIGINS, CORS_ORIGIN_REGEX
 import app.modules  # Register all models with Base.metadata
 
 # Import all routers
@@ -29,10 +30,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Configuration
+# CORS Configuration (Supports localhost, Tailscale Funnel *.ts.net, and Tailscale IP)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX if CORS_ORIGIN_REGEX else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
