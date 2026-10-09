@@ -1,18 +1,21 @@
 import os
 from pathlib import Path
 
-# Load .env file from backend directory if present
-env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-if env_path.exists():
-    with open(env_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                k = k.strip()
-                v = v.strip().strip("'\"")
-                if k not in os.environ:
-                    os.environ[k] = v
+# Load .env file from backend or root directory if present
+for p in [
+    Path(__file__).resolve().parent.parent.parent / ".env",
+    Path(__file__).resolve().parent.parent.parent.parent / ".env",
+]:
+    if p.exists():
+        with open(p, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if not os.environ.get(k):
+                        os.environ[k] = v
 
 # Database Configuration (Mandatory from .env)
 DATABASE_URL: str = os.getenv("DATABASE_URL", "")
@@ -47,9 +50,11 @@ else:
 
 # 2. Regex pattern for Tailscale Funnel (https://*.ts.net) and Tailscale CGNAT IP (100.64.0.0/10)
 # Default regex matches all Tailscale Funnel domains (*.ts.net) and Tailscale IP (100.x.x.x)
-CORS_ORIGIN_REGEX: str = os.getenv(
-    "CORS_ORIGIN_REGEX",
-    r"^https://.*\.ts\.net(:\d+)?$|^http://100\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"
+CORS_ORIGIN_REGEX_RAW: str = os.getenv("CORS_ORIGIN_REGEX", "").strip()
+CORS_ORIGIN_REGEX: str = (
+    CORS_ORIGIN_REGEX_RAW
+    if CORS_ORIGIN_REGEX_RAW
+    else r"^https://.*\.ts\.net(:\d+)?$|^http://100\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"
 )
 
 # AI Service Settings (All purely read from .env)

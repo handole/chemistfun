@@ -12,6 +12,7 @@ import {
   BarChart2
 } from 'lucide-vue-next'
 import { api } from '@/api/client'
+import { renderFormula } from '@/utils/formula'
 
 const props = defineProps({
   quiz: Object,
@@ -282,8 +283,7 @@ onUnmounted(() => {
 
         <!-- Question Text -->
         <div v-if="currentQuestion" class="space-y-4">
-          <p class="text-sm sm:text-base font-bold text-slate-900 leading-relaxed">
-            {{ currentQuestion.question_text }}
+          <p class="text-sm sm:text-base font-bold text-slate-900 leading-relaxed" v-html="renderFormula(currentQuestion.question_text)">
           </p>
 
           <!-- Options -->
@@ -305,7 +305,7 @@ onUnmounted(() => {
               >
                 {{ opt.key || opt.id }}
               </span>
-              <span class="pt-0.5">{{ opt.text }}</span>
+              <span class="pt-0.5" v-html="renderFormula(opt.text)"></span>
             </button>
           </div>
         </div>

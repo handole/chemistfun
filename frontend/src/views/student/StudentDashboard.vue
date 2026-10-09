@@ -22,7 +22,7 @@ import {
 import { api } from '@/api/client'
 import StoichiometryLab from '@/views/virtual-lab/StoichiometryLab.vue'
 import StudentQuizTake from '@/views/student/StudentQuizTake.vue'
-import { typesetMath } from '@/utils/mathjax'
+import { renderFormula } from '@/utils/formula'
 
 const props = defineProps({
   user: Object
@@ -561,7 +561,7 @@ onMounted(() => {
               <div 
                 v-if="mat.content_html"
                 class="text-xs text-slate-600 leading-relaxed prose prose-sm max-w-none pt-2 border-t border-slate-200/50"
-                v-html="mat.content_html"
+                v-html="renderFormula(mat.content_html)"
               ></div>
               <p v-else class="text-xs text-slate-400 italic">Belum ada penjelasan tertulis pada materi ini.</p>
             </div>

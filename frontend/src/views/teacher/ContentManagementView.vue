@@ -21,6 +21,7 @@ import {
   CheckSquare
 } from 'lucide-vue-next'
 import { api } from '@/api/client'
+import { renderFormula } from '@/utils/formula'
 
 const props = defineProps({
   user: Object
@@ -764,7 +765,7 @@ onMounted(() => {
                 <div 
                   v-if="mat.content_html"
                   class="text-xs sm:text-sm text-slate-700 leading-relaxed prose prose-sm sm:prose-base max-w-none pt-2 border-t border-slate-200/50"
-                  v-html="mat.content_html"
+                  v-html="renderFormula(mat.content_html)"
                 ></div>
                 <p v-else class="text-xs text-slate-400 italic pt-2 border-t border-slate-200/50">
                   Belum ada penjelasan tertulis pada materi ini.

@@ -11,7 +11,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-KimiFun_db}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Bind to 127.0.0.1 to avoid exposing database directly to public network
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -34,7 +35,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-KimiFun_db}
       ENVIRONMENT: ${ENVIRONMENT:-development}
-      SECRET_KEY: ${SECRET_KEY:-KimiFun-secret-key-development-1234567890}
+      SECRET_KEY: ${SECRET_KEY:-KimiFun-insecure-development-secret-key-change-in-production-1234567890}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       CORS_ORIGIN_REGEX: ${CORS_ORIGIN_REGEX:-}
       AI_PROVIDER: ${AI_PROVIDER:-9router}
@@ -44,13 +45,14 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      # Bind to 127.0.0.1; frontend proxies /api to http://backend:8000 via internal Docker network
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
     depends_on:
       postgres:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 ${UVICORN_EXTRA_ARGS:---reload}
     networks:
       - KimiFun_network
 

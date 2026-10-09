@@ -14,6 +14,7 @@ import AuthModal from '@/views/auth/AuthModal.vue'
 import AuthPage from '@/views/auth/AuthPage.vue'
 import { Sparkles, MessageSquare, X, RefreshCw, Send } from 'lucide-vue-next'
 import { api } from '@/api/client'
+import { renderFormula } from '@/utils/formula'
 
 const currentTab = ref('dashboard')
 const backendOnline = ref(true)
@@ -46,10 +47,18 @@ const handleSendKimi = async () => {
       text: res.answer || 'Mohon maaf, Kimi belum dapat menjawab pertanyaan ini.'
     })
   } catch (err) {
-    kimiMessages.value.push({
-      role: 'bot',
-      text: 'Gagal terhubung ke Kimi: ' + err.message
-    })
+    if (err.message && err.message.toLowerCase().includes('token')) {
+      handleLogout()
+      kimiMessages.value.push({
+        role: 'bot',
+        text: 'Sesi login telah berakhir atau tidak valid. Silakan login kembali.'
+      })
+    } else {
+      kimiMessages.value.push({
+        role: 'bot',
+        text: 'Gagal terhubung ke Kimi: ' + err.message
+      })
+    }
   } finally {
     kimiLoading.value = false
   }
@@ -251,8 +260,8 @@ onMounted(() => {
             :class="msg.role === 'user' 
               ? 'bg-slate-900 text-white p-3 rounded-2xl rounded-br-none ml-auto max-w-[85%] text-xs font-medium'
               : 'bg-white border border-slate-200 text-slate-700 p-3 rounded-2xl rounded-bl-none max-w-[85%] text-xs leading-relaxed shadow-2xs whitespace-pre-line'"
+            v-html="renderFormula(msg.text)"
           >
-            {{ msg.text }}
           </div>
           <div v-if="kimiLoading" class="bg-white border border-slate-200 text-slate-400 p-2.5 rounded-2xl rounded-bl-none max-w-[85%] text-xs flex items-center gap-2">
             <RefreshCw class="w-3.5 h-3.5 animate-spin text-purple-600" />

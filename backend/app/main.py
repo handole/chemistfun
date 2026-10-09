@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import Base, engine
-from app.core.config import CORS_ORIGINS, CORS_ORIGIN_REGEX
+from app.core.config import CORS_ORIGINS, CORS_ORIGIN_REGEX, ENVIRONMENT
 import app.modules  # Register all models with Base.metadata
 
 # Import all routers
@@ -23,11 +23,16 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
+is_production = ENVIRONMENT.lower() == "production"
+
 app = FastAPI(
     title="KimiFun API",
     version="1.0.0",
     description="API Backend untuk Laboratorium Maya & Platform Pembelajaran Kimia",
     lifespan=lifespan,
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
 
 # CORS Configuration (Supports localhost, Tailscale Funnel *.ts.net, and Tailscale IP)
@@ -55,7 +60,7 @@ async def read_root():
     return {
         "message": "Welcome to KimiFun API",
         "status": "online",
-        "docs_url": "/docs",
+        "docs_url": "/docs" if not is_production else None,
     }
 
 
