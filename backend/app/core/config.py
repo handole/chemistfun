@@ -48,14 +48,18 @@ if CORS_ORIGINS_RAW.strip():
 else:
     CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
-# 2. Regex pattern for Tailscale Funnel (https://*.ts.net) and Tailscale CGNAT IP (100.64.0.0/10)
-# Default regex matches all Tailscale Funnel domains (*.ts.net) and Tailscale IP (100.x.x.x)
+# 2. Regex pattern for Tailscale Funnel and Tailscale CGNAT IP (100.64.0.0/10)
+# Restricted to the user tailnet domain (*.tail39a9bf.ts.net) and local/tailscale IPs
 CORS_ORIGIN_REGEX_RAW: str = os.getenv("CORS_ORIGIN_REGEX", "").strip()
 CORS_ORIGIN_REGEX: str = (
     CORS_ORIGIN_REGEX_RAW
     if CORS_ORIGIN_REGEX_RAW
-    else r"^https://.*\.ts\.net(:\d+)?$|^http://100\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"
+    else r"^https://.*\.ts\.net(:\d+)?$|^http://localhost:5173$|^http://127\.0\.0\.1:5173$|^http://100\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"
 )
+
+# Registration Security
+# ponytail: empty invite code disables teacher self-registration until configured in env
+TEACHER_INVITE_CODE: str = os.getenv("TEACHER_INVITE_CODE", "")
 
 # AI Service Settings (All purely read from .env)
 AI_PROVIDER: str = os.getenv("AI_PROVIDER", "").lower()

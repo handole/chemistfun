@@ -39,6 +39,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       CORS_ORIGIN_REGEX: ${CORS_ORIGIN_REGEX:-}
       AI_PROVIDER: ${AI_PROVIDER:-9router}
+      TEACHER_INVITE_CODE: ${TEACHER_INVITE_CODE:-}
       NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY:-}
       NINE_ROUTER_BASE_URL: ${NINE_ROUTER_BASE_URL:-https://api.9router.com/v1}
       NINE_ROUTER_MODEL: ${NINE_ROUTER_MODEL:-ag/gemini-1.5-flash}
@@ -66,7 +67,8 @@ services:
     container_name: KimiFun_frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      # ponytail: bind 127.0.0.1 by default; override FRONTEND_HOST_IP in .env for tailscale or public bind
+      - "${FRONTEND_HOST_IP:-127.0.0.1}:${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules

@@ -321,7 +321,7 @@ onMounted(() => {
 
     <!-- Modal Buat Kelas Baru -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-elevated space-y-5">
+      <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-elevated space-y-5">
         <div>
           <h3 class="text-lg font-bold text-slate-900">Buat Kelas Kimia Baru</h3>
           <p class="text-xs text-slate-500 mt-0.5">Tentukan nama kelas dan kode unik untuk siswa Anda.</p>
@@ -397,7 +397,7 @@ onMounted(() => {
 
     <!-- Modal Tambah Siswa Langsung oleh Guru -->
     <div v-if="showAddStudentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-elevated space-y-4 max-h-[85vh] flex flex-col">
+      <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-elevated space-y-4 max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
             <h3 class="text-base font-bold text-slate-900">Tambahkan Siswa ke Kelas</h3>
@@ -485,4 +485,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

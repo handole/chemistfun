@@ -1,4 +1,5 @@
 import katex from 'katex'
+import DOMPurify from 'dompurify'
 
 function escapeHtml(str) {
   return str
@@ -7,6 +8,18 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
+}
+
+function sanitizeHtml(html) {
+  if (typeof window !== 'undefined') {
+    try {
+      const purifier = typeof DOMPurify.sanitize === 'function' ? DOMPurify : DOMPurify(window)
+      return purifier.sanitize(html)
+    } catch {
+      return escapeHtml(html)
+    }
+  }
+  return escapeHtml(html)
 }
 
 /**
@@ -25,6 +38,7 @@ export function renderFormula(content, allowHtml = false) {
   const hasHtml = allowHtml || /<\/?[a-z][\s\S]*>/i.test(content)
 
   const placeholders = []
+  const uid = Math.random().toString(36).slice(2, 8)
 
   // 1. Process block math: $$ ... $$ or \[ ... \]
   let text = content.replace(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g, (match, p1, p2) => {
@@ -34,7 +48,7 @@ export function renderFormula(content, allowHtml = false) {
         displayMode: true,
         throwOnError: false,
       })
-      const token = `__KATEX_BLOCK_${placeholders.length}__`
+      const token = `\u0000KATEX_BLOCK_${uid}_${placeholders.length}\u0000`
       placeholders.push({ token, rendered })
       return token
     } catch {
@@ -50,7 +64,7 @@ export function renderFormula(content, allowHtml = false) {
         displayMode: false,
         throwOnError: false,
       })
-      const token = `__KATEX_INLINE_${placeholders.length}__`
+      const token = `\u0000KATEX_INLINE_${uid}_${placeholders.length}\u0000`
       placeholders.push({ token, rendered })
       return token
     } catch {
@@ -58,8 +72,10 @@ export function renderFormula(content, allowHtml = false) {
     }
   })
 
-  // 3. Only escape HTML & convert newlines if content is plain text (not already HTML markup)
-  if (!hasHtml) {
+  // 3. Sanitize HTML markup or escape plain text before restoring math formulas
+  if (hasHtml) {
+    text = sanitizeHtml(text)
+  } else {
     text = escapeHtml(text)
     text = text.replace(/\n/g, '<br>')
   }

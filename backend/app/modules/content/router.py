@@ -29,6 +29,7 @@ from app.modules.content.schemas import (
 )
 from app.modules.content.chemistry_engine import ChemistryEngine
 from app.services.ai_generator import AIGenerator
+from app.core.rate_limiter import chembot_rate_limiter
 from app.modules.users.models import User, UserRole
 from app.utils.dependencies import (
     get_current_user,
@@ -442,6 +443,15 @@ async def chat_with_chembot(
     payload: AIChemBotRequest,
     current_user: User = Depends(get_current_user),
 ):
+    user_key = f"user_{current_user.id}"
+    allowed, retry_after = chembot_rate_limiter.is_allowed(user_key)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Terlalu banyak permintaan ke Kimi AI. Silakan tunggu {retry_after} detik sebelum bertanya lagi.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     try:
         answer = await AIGenerator.ask_chembot(payload.question)
         return AIChemBotResponse(answer=answer)

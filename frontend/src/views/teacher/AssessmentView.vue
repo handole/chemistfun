@@ -520,7 +520,7 @@ onMounted(() => {
 
     <!-- Modal Tambah Indikator Metrik -->
     <div v-if="showMetricModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-elevated space-y-4">
+      <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-elevated space-y-4">
         <h3 class="text-base font-bold text-slate-900">Tambah Indikator Capaian (Radar)</h3>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Nama Indikator</label>
@@ -540,7 +540,7 @@ onMounted(() => {
 
     <!-- Modal Inisialisasi Kuis -->
     <div v-if="showQuizModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-elevated space-y-4">
+      <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-elevated space-y-4">
         <h3 class="text-base font-bold text-slate-900">Inisialisasi Kuis Baru</h3>
         <div class="space-y-3 text-xs">
           <div>
@@ -570,7 +570,7 @@ onMounted(() => {
 
     <!-- Modal Tambah Butir Soal -->
     <div v-if="showQuestionModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-elevated space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-3xl max-w-5xl w-full p-6 shadow-elevated space-y-4 max-h-[90vh] overflow-y-auto">
         <h3 class="text-base font-bold text-slate-900">Tambah Butir Soal Pilihan Ganda</h3>
 
         <div class="space-y-3 text-xs">
@@ -644,4 +644,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

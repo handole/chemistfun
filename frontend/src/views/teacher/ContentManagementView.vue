@@ -499,7 +499,7 @@ onMounted(() => {
 
     <!-- Modal Tambah Topik Modul -->
     <div v-if="showModuleModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-elevated space-y-4">
+      <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-elevated space-y-4">
         <h3 class="text-base font-bold text-slate-900">Tambah Topik Modul Baru</h3>
         
         <div class="space-y-3 text-sm">
@@ -531,7 +531,7 @@ onMounted(() => {
 
     <!-- Modal Form Materi Pembelajaran -->
     <div v-if="showMaterialModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-elevated space-y-4">
+      <div class="bg-white rounded-3xl max-w-5xl w-full p-6 shadow-elevated space-y-4">
         <h3 class="text-base font-bold text-slate-900">
           {{ isEditingMaterial ? 'Edit Materi Pembelajaran' : 'Tambah Materi Baru' }}
         </h3>
@@ -624,7 +624,7 @@ onMounted(() => {
     >
       <div 
         class="bg-white rounded-3xl w-full flex flex-col shadow-2xl border border-slate-200 max-h-[92vh] overflow-hidden transition-all duration-200"
-        :class="previewDeviceMode === 'mobile' ? 'max-w-[400px]' : 'max-w-4xl'"
+        :class="previewDeviceMode === 'mobile' ? 'max-w-[420px]' : 'max-w-5xl'"
       >
         <!-- Modal Top Bar -->
         <div class="px-5 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
@@ -697,7 +697,7 @@ onMounted(() => {
         </div>
 
         <!-- Scrollable Student Perspective Content -->
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#F6F8FC] space-y-4">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 bg-chemist-bg space-y-4">
           <!-- Draft Notice (if viewing a draft material) -->
           <div 
             v-if="previewMaterial && !previewMaterial.is_published" 
@@ -805,4 +805,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

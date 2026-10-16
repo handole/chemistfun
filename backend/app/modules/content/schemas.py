@@ -119,7 +119,7 @@ class AIMaterialGenerateResponse(BaseModel):
 
 
 class AIChemBotRequest(BaseModel):
-    question: str = Field(..., min_length=2, description="Pertanyaan kimia siswa")
+    question: str = Field(..., min_length=2, max_length=1000, description="Pertanyaan kimia siswa")
 
 
 class AIChemBotResponse(BaseModel):

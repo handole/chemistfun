@@ -10,10 +10,11 @@ const props = defineProps({
 const emit = defineEmits(['close', 'login-success'])
 
 const mode = ref('login') // 'login' | 'register'
-const email = ref('guru@KimiFun.com')
-const password = ref('Password123!')
+const email = ref('')
+const password = ref('')
 const fullName = ref('')
-const role = ref('teacher')
+const role = ref('student')
+const teacherInviteCode = ref('')
 
 const loading = ref(false)
 const error = ref('')
@@ -39,6 +40,10 @@ const handleRegister = async () => {
     error.value = 'Semua data wajib diisi.'
     return
   }
+  if (role.value === 'teacher' && !teacherInviteCode.value.trim()) {
+    error.value = 'Kode undangan guru wajib diisi untuk pendaftaran akun guru.'
+    return
+  }
   loading.value = true
   error.value = ''
   try {
@@ -46,7 +51,8 @@ const handleRegister = async () => {
       email: email.value.trim(),
       password: password.value,
       full_name: fullName.value.trim(),
-      role: role.value
+      role: role.value,
+      teacher_invite_code: role.value === 'teacher' ? teacherInviteCode.value.trim() : null
     })
     localStorage.setItem('KimiFun_token', res.access_token)
     localStorage.setItem('KimiFun_user', JSON.stringify(res.user))
@@ -58,25 +64,11 @@ const handleRegister = async () => {
     loading.value = false
   }
 }
-
-const quickLoginTeacher = async () => {
-  email.value = 'guru@KimiFun.com'
-  password.value = 'Password123!'
-  mode.value = 'login'
-  await handleLogin()
-}
-
-const quickLoginStudent = async () => {
-  email.value = 'budi@KimiFun.com'
-  password.value = 'Password123!'
-  mode.value = 'login'
-  await handleLogin()
-}
 </script>
 
 <template>
   <div v-if="isOpen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-elevated space-y-6 relative">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-elevated space-y-6 relative">
       <!-- Close button -->
       <button 
         @click="emit('close')"
@@ -140,9 +132,19 @@ const quickLoginStudent = async () => {
             v-model="role"
             class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none font-semibold"
           >
-            <option value="teacher">👨‍🏫 Guru (Teacher)</option>
             <option value="student">👨‍🎓 Siswa (Student)</option>
+            <option value="teacher">👨‍🏫 Guru (Teacher)</option>
           </select>
+        </div>
+
+        <div v-if="mode === 'register' && role === 'teacher'">
+          <label class="block font-bold text-slate-700 mb-1">Kode Undangan Guru</label>
+          <input 
+            v-model="teacherInviteCode"
+            type="text" 
+            placeholder="Masukkan kode undangan resmi dari sekolah"
+            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
+          />
         </div>
 
         <button 

@@ -125,7 +125,7 @@ onMounted(() => {
 
 <template>
   <!-- Loading initial session check -->
-  <div v-if="!authChecked" class="min-h-screen bg-[#F6F8FC] flex items-center justify-center">
+  <div v-if="!authChecked" class="min-h-screen bg-chemist-bg flex items-center justify-center">
     <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
       <RefreshCw class="w-4 h-4 animate-spin text-chemist-primary" />
       <span>Memuat sesi KimiFun...</span>
@@ -139,7 +139,7 @@ onMounted(() => {
   />
 
   <!-- MAIN APP VIEW (Jika sudah login) -->
-  <div v-else class="min-h-screen bg-[#F6F8FC] flex flex-col">
+  <div v-else class="min-h-screen bg-chemist-bg flex flex-col">
     <!-- Topbar Navigation -->
     <AppHeader 
       :user="user"

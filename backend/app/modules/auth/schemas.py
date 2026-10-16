@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,6 +17,7 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=6, description="User password")
     full_name: str = Field(..., min_length=1, max_length=255, description="Full name")
     role: UserRole = Field(default=UserRole.STUDENT, description="User role")
+    teacher_invite_code: Optional[str] = Field(None, description="Secret code required to register as teacher")
 
 
 class UserSummary(BaseModel):

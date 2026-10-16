@@ -7,6 +7,7 @@ import TeacherDashboard from '@/views/teacher/TeacherDashboard.vue'
 import StudentDashboard from '@/views/student/StudentDashboard.vue'
 import ContentManagementView from '@/views/teacher/ContentManagementView.vue'
 import VirtualLabConfigView from '@/views/teacher/VirtualLabConfigView.vue'
+import { renderFormula } from '@/utils/formula'
 
 describe('KimiFun Application Smoke Tests', () => {
   it('App component mounts without error', () => {
@@ -41,5 +42,11 @@ describe('KimiFun Application Smoke Tests', () => {
       props: { initialMaterial: null, user: { role: 'teacher' } }
     })
     expect(wrapper.exists()).toBe(true)
+  })
+
+  it('renderFormula escapes XSS attacks while rendering math', () => {
+    const output = renderFormula('<img src=x onerror=alert(1)><b>Air</b> $$H_2O$$')
+    expect(output).not.toContain('onerror')
+    expect(output).toContain('katex')
   })
 })

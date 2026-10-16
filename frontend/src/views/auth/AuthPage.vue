@@ -9,7 +9,8 @@ const mode = ref('login') // 'login' | 'register'
 const email = ref('')
 const password = ref('')
 const fullName = ref('')
-const role = ref('teacher')
+const role = ref('student')
+const teacherInviteCode = ref('')
 
 const loading = ref(false)
 const error = ref('')
@@ -38,6 +39,10 @@ const handleRegister = async () => {
     error.value = 'Semua data formulir wajib diisi.'
     return
   }
+  if (role.value === 'teacher' && !teacherInviteCode.value.trim()) {
+    error.value = 'Kode undangan guru wajib diisi untuk pendaftaran akun guru.'
+    return
+  }
   loading.value = true
   error.value = ''
   try {
@@ -45,7 +50,8 @@ const handleRegister = async () => {
       email: email.value.trim(),
       password: password.value,
       full_name: fullName.value.trim(),
-      role: role.value
+      role: role.value,
+      teacher_invite_code: role.value === 'teacher' ? teacherInviteCode.value.trim() : null
     })
     localStorage.setItem('KimiFun_token', res.access_token)
     localStorage.setItem('KimiFun_user', JSON.stringify(res.user))
@@ -59,7 +65,7 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F8FC] flex flex-col justify-center items-center p-4">
+  <div class="min-h-screen bg-chemist-bg flex flex-col justify-center items-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-elevated border border-slate-100 space-y-6">
       <!-- Brand Header -->
       <div class="text-center space-y-1">
@@ -136,9 +142,19 @@ const handleRegister = async () => {
             v-model="role"
             class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
           >
-            <option value="teacher">Guru</option>
             <option value="student">Siswa</option>
+            <option value="teacher">Guru</option>
           </select>
+        </div>
+
+        <div v-if="mode === 'register' && role === 'teacher'">
+          <label class="block font-bold text-slate-700 mb-1">Kode Undangan Guru</label>
+          <input 
+            v-model="teacherInviteCode"
+            type="text" 
+            placeholder="Masukkan kode undangan dari sekolah"
+            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
+          />
         </div>
 
         <button 

@@ -106,10 +106,6 @@ const selectModule = async (mod) => {
     } catch (e) {
       activeQuiz.value = null
     }
-
-    nextTick(() => {
-      typesetMath()
-    })
   } catch (err) {
     console.error('Gagal memuat materi:', err)
   }
