@@ -17,6 +17,10 @@ const props = defineProps({
   role: {
     type: String,
     default: 'teacher'
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -42,7 +46,12 @@ const setTab = (id) => {
 </script>
 
 <template>
-  <aside class="w-64 bg-white border-r border-slate-100 flex flex-col justify-between p-4 shrink-0 min-h-[calc(100vh-5rem)]">
+  <aside 
+    :class="[
+      'bg-white flex flex-col justify-between p-4 shrink-0',
+      isMobile ? 'w-full min-h-0' : 'w-64 border-r border-slate-100 min-h-[calc(100vh-5rem)]'
+    ]"
+  >
     <!-- Top Nav Section -->
     <div class="space-y-6">
       <!-- Section: MENU UTAMA -->

@@ -20,6 +20,7 @@ const currentTab = ref('dashboard')
 const backendOnline = ref(true)
 const showAuthModal = ref(false)
 const showKimi = ref(false)
+const mobileMenuOpen = ref(false)
 const selectedMaterialForLab = ref(null)
 
 // Kimi Chat State
@@ -144,10 +145,61 @@ onMounted(() => {
     <AppHeader 
       :user="user"
       :backend-online="backendOnline"
+      :mobile-menu-open="mobileMenuOpen"
+      @toggle-sidebar="mobileMenuOpen = !mobileMenuOpen"
       @logout="handleLogout"
       @open-auth="showAuthModal = true"
       @refresh="checkStatusAndUser"
     />
+
+    <!-- Mobile Navigation Drawer -->
+    <div 
+      v-if="mobileMenuOpen" 
+      class="fixed inset-0 z-50 md:hidden"
+    >
+      <!-- Backdrop -->
+      <div 
+        @click="mobileMenuOpen = false" 
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+      ></div>
+
+      <!-- Drawer Content -->
+      <div class="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl flex flex-col z-50">
+        <!-- Drawer Header -->
+        <div class="h-20 px-5 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-chemist-dark flex items-center justify-center text-white shadow-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4.5 3h15"/>
+                <path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/>
+                <path d="M6 14h12"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-slate-900 leading-none">KimiFun</h2>
+              <p class="text-[9px] font-semibold text-slate-400 uppercase mt-1">Menu Navigasi</p>
+            </div>
+          </div>
+          <button 
+            @click="mobileMenuOpen = false"
+            class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            aria-label="Tutup menu"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto">
+          <AppSidebar 
+            :current-tab="currentTab"
+            :role="user?.role"
+            :is-mobile="true"
+            @update:current-tab="(tab) => { currentTab = tab; mobileMenuOpen = false }"
+          />
+        </div>
+      </div>
+    </div>
 
     <!-- Main Workspace Body (Sidebar + Content) -->
     <div class="flex-1 flex max-w-[1600px] w-full mx-auto">

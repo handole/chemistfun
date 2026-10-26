@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Bell, LogOut, User, RefreshCw } from 'lucide-vue-next'
+import { Bell, LogOut, User, RefreshCw, Menu } from 'lucide-vue-next'
 
 const props = defineProps({
   user: {
@@ -10,10 +10,14 @@ const props = defineProps({
   backendOnline: {
     type: Boolean,
     default: true
+  },
+  mobileMenuOpen: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['logout', 'open-auth', 'refresh'])
+const emit = defineEmits(['logout', 'open-auth', 'refresh', 'toggle-sidebar'])
 
 const showUserMenu = ref(false)
 
@@ -24,10 +28,19 @@ const getInitials = (name) => {
 </script>
 
 <template>
-  <header class="h-20 bg-white border-b border-slate-100 px-6 flex items-center justify-between sticky top-0 z-30 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-    <!-- Left: Logo and Brand (Desktop & Mobile) -->
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-chemist-dark flex items-center justify-center text-white shadow-md shadow-slate-900/10">
+  <header class="h-20 bg-white border-b border-slate-100 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+    <!-- Left: Hamburger button (Mobile) + Logo and Brand -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Mobile Hamburger Button -->
+      <button
+        @click="emit('toggle-sidebar')"
+        class="md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+        aria-label="Buka menu navigasi"
+      >
+        <Menu class="w-6 h-6" />
+      </button>
+
+      <div class="w-10 h-10 rounded-xl bg-chemist-dark flex items-center justify-center text-white shadow-md shadow-slate-900/10 shrink-0">
         <!-- Beaker Icon SVG -->
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4.5 3h15"/>
@@ -36,8 +49,8 @@ const getInitials = (name) => {
         </svg>
       </div>
       <div>
-        <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">KimiFun</h1>
-        <p class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-1">Virtual Chemistry Lab</p>
+        <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-none">KimiFun</h1>
+        <p class="text-[9px] sm:text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-1">Virtual Chemistry Lab</p>
       </div>
     </div>
 
