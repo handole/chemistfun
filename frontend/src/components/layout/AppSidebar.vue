@@ -6,7 +6,8 @@ import {
   FlaskConical, 
   CheckSquare, 
   BarChart3, 
-  Settings
+  Settings,
+  ClipboardCheck
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -30,6 +31,7 @@ const teacherMenus = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
   { id: 'classes', label: 'Kelas Saya', icon: Users },
   { id: 'content', label: 'Modul Belajar', icon: BookOpen },
+  { id: 'journals', label: 'Jurnal Mengajar', icon: ClipboardCheck },
   { id: 'labs', label: 'Lab Virtual', icon: FlaskConical },
   { id: 'assessment', label: 'Kuis & Asesmen', icon: CheckSquare },
   { id: 'analytics', label: 'Analisis Siswa', icon: BarChart3 },

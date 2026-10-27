@@ -12,6 +12,7 @@ from app.modules.users.router import router as users_router
 from app.modules.classes.router import router as classes_router
 from app.modules.content.router import router as content_router
 from app.modules.assessment.router import router as assessment_router
+from app.modules.journals.router import router as journals_router
 
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app.include_router(users_router, prefix=API_PREFIX)
 app.include_router(classes_router, prefix=API_PREFIX)
 app.include_router(content_router, prefix=API_PREFIX)
 app.include_router(assessment_router, prefix=API_PREFIX)
+app.include_router(journals_router, prefix=API_PREFIX)
 
 
 @app.get("/", tags=["Root"])

@@ -7,6 +7,7 @@ import ClassManagementView from '@/views/teacher/ClassManagementView.vue'
 import ContentManagementView from '@/views/teacher/ContentManagementView.vue'
 import VirtualLabConfigView from '@/views/teacher/VirtualLabConfigView.vue'
 import AssessmentView from '@/views/teacher/AssessmentView.vue'
+import JournalManagementView from '@/views/teacher/JournalManagementView.vue'
 import StudentDashboard from '@/views/student/StudentDashboard.vue'
 import StoichiometryLab from '@/views/virtual-lab/StoichiometryLab.vue'
 import SettingsView from '@/views/settings/SettingsView.vue'
@@ -257,6 +258,11 @@ onMounted(() => {
             v-else-if="currentTab === 'content'" 
             :user="user"
             @open-lab="openLabWithMaterial"
+          />
+
+          <JournalManagementView 
+            v-else-if="currentTab === 'journals'" 
+            :user="user"
           />
 
           <VirtualLabConfigView 

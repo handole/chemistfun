@@ -276,6 +276,34 @@ export const api = {
     getAttempt(attemptUuid) {
       return request(`/assessment/attempts/${attemptUuid}`)
     },
-  }
+  },
+
+  // Teaching Journals
+  journals: {
+    list(classId = null) {
+      const qs = classId ? `?class_id=${classId}` : ''
+      return request(`/journals/${qs}`)
+    },
+    get(journalUuid) {
+      return request(`/journals/${journalUuid}`)
+    },
+    create(data) {
+      return request('/journals/', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    },
+    update(journalUuid, data) {
+      return request(`/journals/${journalUuid}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      })
+    },
+    delete(journalUuid) {
+      return request(`/journals/${journalUuid}`, {
+        method: 'DELETE',
+      })
+    },
+  },
 }
 

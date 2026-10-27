@@ -9,6 +9,11 @@ from app.modules.assessment.models import (
     StudentAnswer,
     StudentQuizAttempt,
 )
+from app.modules.journals.models import (
+    AttendanceStatus,
+    JournalAttendance,
+    TeachingJournal,
+)
 
 __all__ = [
     "UserRole",
@@ -25,5 +30,8 @@ __all__ = [
     "Question",
     "StudentQuizAttempt",
     "StudentAnswer",
+    "AttendanceStatus",
+    "TeachingJournal",
+    "JournalAttendance",
 ]
 

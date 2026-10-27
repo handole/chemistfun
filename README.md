@@ -55,7 +55,7 @@ Tingkatan Level (X, XI, XII)
   └── Modul Kurikulum -> Materi Pembelajaran -> Virtual Lab & Kuis Asesmen
 ```
 
-- **Guru**: Mengelola sub-kelas (kode enrollment), menyusun modul/materi per level tingkatan (`X`, `XI`, `XII`), mengonfigurasi parameter lab virtual, dan menerbitkan kuis evaluasi.
+- **Guru**: Mengelola sub-kelas (kode enrollment), menyusun modul/materi per level tingkatan (`X`, `XI`, `XII`), mengonfigurasi parameter lab virtual, menerbitkan kuis evaluasi, serta mencatat **jurnal mengajar harian** (presensi, ketercapaian silabus materi, dan penilaian tugas siswa).
 - **Siswa**: Bergabung ke sub-kelas menggunakan kode unik, otomatis mendapatkan akses ke seluruh modul kurikulum tingkatan level kelasnya, menjalankan simulasi titrasi lab interaktif, serta mengerjakan kuis dengan hasil penilaian radar kompetensi.
 
 ---
@@ -130,3 +130,4 @@ Perintah ini akan menyalakan 3 layanan:
 ## 📚 Dokumentasi Terkait
 
 - [Dokumentasi Skema Database & ERD](./docs/database_schema.md)
+- [Dokumentasi Fitur Jurnal Mengajar & Presensi](./docs/teaching_journal.md)
