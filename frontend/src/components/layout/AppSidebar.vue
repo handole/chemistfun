@@ -6,7 +6,8 @@ import {
   FlaskConical, 
   CheckSquare, 
   BarChart3, 
-  Settings
+  Settings,
+  ClipboardCheck
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -17,6 +18,10 @@ const props = defineProps({
   role: {
     type: String,
     default: 'teacher'
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -26,6 +31,7 @@ const teacherMenus = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
   { id: 'classes', label: 'Kelas Saya', icon: Users },
   { id: 'content', label: 'Modul Belajar', icon: BookOpen },
+  { id: 'journals', label: 'Jurnal Mengajar', icon: ClipboardCheck },
   { id: 'labs', label: 'Lab Virtual', icon: FlaskConical },
   { id: 'assessment', label: 'Kuis & Asesmen', icon: CheckSquare },
   { id: 'analytics', label: 'Analisis Siswa', icon: BarChart3 },
@@ -42,7 +48,12 @@ const setTab = (id) => {
 </script>
 
 <template>
-  <aside class="w-64 bg-white border-r border-slate-100 flex flex-col justify-between p-4 shrink-0 min-h-[calc(100vh-5rem)]">
+  <aside 
+    :class="[
+      'bg-white flex flex-col justify-between p-4 shrink-0',
+      isMobile ? 'w-full min-h-0' : 'w-64 border-r border-slate-100 min-h-[calc(100vh-5rem)]'
+    ]"
+  >
     <!-- Top Nav Section -->
     <div class="space-y-6">
       <!-- Section: MENU UTAMA -->

@@ -25,6 +25,10 @@ erDiagram
     quizzes ||--o{ student_quiz_attempts : "dikerjakan (quiz_id)"
     student_quiz_attempts ||--o{ student_answers : "memiliki (attempt_id)"
     questions ||--o{ student_answers : "dijawab (question_id)"
+    users ||--o{ teaching_journals : "membuat (teacher_id)"
+    classes ||--o{ teaching_journals : "sesi_untuk (class_id)"
+    teaching_journals ||--o{ journal_attendances : "memiliki (journal_id)"
+    users ||--o{ journal_attendances : "presensi_nilai (student_id)"
 
     users {
         int id PK
@@ -127,6 +131,31 @@ erDiagram
         varchar selected_answer
         boolean is_correct
     }
+
+    teaching_journals {
+        int id PK
+        uuid uuid UK
+        int teacher_id FK
+        int class_id FK
+        varchar title
+        date date
+        varchar start_time
+        varchar end_time
+        jsonb planned_materials
+        jsonb completed_materials
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    journal_attendances {
+        int id PK
+        int journal_id FK
+        int student_id FK
+        attendance_status status
+        float score
+        varchar notes
+    }
 ```
 
 ---
@@ -141,6 +170,7 @@ Semua model database ditempatkan di dalam folder modul masing-masing di bawah `b
 | **2** | **Manajemen Kelas & Level** | `backend/app/modules/classes/models.py` | `classes`, `class_students` |
 | **3** | **Manajemen Materi & Virtual Lab** | `backend/app/modules/content/models.py` | `modules`, `materials`, `virtual_labs` |
 | **4** | **Bank Soal & Asesmen Siswa** | `backend/app/modules/assessment/models.py` | `evaluation_metrics`, `quizzes`, `questions`, `student_quiz_attempts`, `student_answers` |
+| **5** | **Jurnal Mengajar & Presensi** | `backend/app/modules/journals/models.py` | `teaching_journals`, `journal_attendances` |
 
 ---
 
@@ -294,3 +324,41 @@ Mencatat setiap jawaban yang dipilih siswa (auto-save saat pengerjaan).
 | `question_id` | `INTEGER` | FK -> `questions.id` (CASCADE), Not Null, Index | ID Soal |
 | `selected_answer` | `VARCHAR(50)` | Nullable | Jawaban yang dipilih siswa |
 | `is_correct` | `BOOLEAN` | Nullable | Evaluasi kebenaran jawaban |
+
+---
+
+### 3.5. Jurnal Mengajar Guru & Presensi Siswa (Teaching Journals)
+
+#### Tabel `teaching_journals`
+Mencatat sesi pertemuan tatap muka/daring, jam pelajaran, checklist materi capaian silabus, dan catatan refleksi guru.
+
+| Kolom | Tipe Data | Constraint | Keterangan |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | Primary Key, Auto-increment | ID internal jurnal |
+| `uuid` | `UUID` | Unique, Not Null, Index | Public slug identifier (default: `uuid4`) |
+| `teacher_id` | `INTEGER` | FK -> `users.id` (CASCADE), Not Null, Index | Guru pembuat jurnal |
+| `class_id` | `INTEGER` | FK -> `classes.id` (CASCADE), Not Null, Index | Kelas yang diajar |
+| `title` | `VARCHAR(255)` | Not Null | Topik / judul sesi pertemuan |
+| `date` | `DATE` | Not Null, Default `current_date` | Tanggal kegiatan mengajar |
+| `start_time` | `VARCHAR(10)` | Nullable | Jam mulai (contoh: "07:30") |
+| `end_time` | `VARCHAR(10)` | Nullable | Jam selesai (contoh: "09:00") |
+| `planned_materials` | `JSONB` | Not Null, Default `[]` | ID materi yang direncanakan diajarkan |
+| `completed_materials` | `JSONB` | Not Null, Default `[]` | ID materi yang berhasil dituntaskan |
+| `notes` | `TEXT` | Nullable | Catatan evaluasi / refleksi kendala kelas |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | Not Null, Server default `now()` | Waktu pembuatan |
+| `updated_at` | `TIMESTAMP WITH TIME ZONE` | Not Null, Server default `now()`, auto-update | Waktu pembaruan terakhir |
+
+#### Tabel `journal_attendances`
+Mencatat kehadiran, catatan individual, dan skor/nilai tugas per siswa pada sesi jurnal terkait.
+
+| Kolom | Tipe Data | Constraint | Keterangan |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | Primary Key, Auto-increment | ID internal rekaman presensi |
+| `journal_id` | `INTEGER` | FK -> `teaching_journals.id` (CASCADE), Not Null, Index | ID sesi jurnal induk |
+| `student_id` | `INTEGER` | FK -> `users.id` (CASCADE), Not Null, Index | ID siswa terdaftar |
+| `status` | `ENUM ('present', 'sick', 'permitted', 'absent')` | Not Null, Default `'present'` | Status kehadiran siswa |
+| `score` | `FLOAT` | Nullable | Nilai tugas/evaluasi siswa (0 - 100) |
+| `notes` | `VARCHAR(255)` | Nullable | Keterangan absensi / catatan tugas |
+
+> **Constraint Unik**: `uq_journal_student_attendance` menjamin pasangan (`journal_id`, `student_id`) tidak duplikat.
+
