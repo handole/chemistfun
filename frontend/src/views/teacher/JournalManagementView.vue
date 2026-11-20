@@ -16,7 +16,7 @@ import {
   Check,
   ChevronRight,
   ClipboardList,
-  Sparkles,
+  X,
   UserCheck,
   Award
 } from 'lucide-vue-next'
@@ -60,7 +60,7 @@ const form = ref({
 // Load basic list
 const loadClasses = async () => {
   try {
-    const res = await api.classes.list(props.user?.id)
+    const res = await api.classes.list(null, true)
     classes.value = res || []
   } catch (err) {
     console.error('Gagal memuat kelas:', err)
@@ -326,29 +326,24 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Header Section -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-      <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-chemist-primary text-xs font-semibold">
-          <ClipboardList class="w-3.5 h-3.5" />
-          <span>Jurnal Pembelajaran & Presensi</span>
-        </div>
-        <h2 class="text-2xl font-bold text-slate-900 tracking-tight">
-          Jurnal Mengajar Guru
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-500 font-normal max-w-xl leading-relaxed">
-          Catat waktu mengajar, ceklis capaian materi kimia yang diajarkan, serta pantau kehadiran murid secara terintegrasi.
+    <!-- Page header -->
+    <header class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight text-ink">Jurnal mengajar</h1>
+        <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
+          Catat sesi mengajar, materi yang selesai dibahas, dan kehadiran siswa dalam satu catatan per pertemuan.
         </p>
       </div>
 
       <button
+        type="button"
         @click="openCreateModal"
-        class="bg-chemist-dark hover:bg-slate-900 text-white px-5 py-3 rounded-2xl text-xs font-bold transition-all shadow-md flex items-center gap-2 shrink-0 active:scale-95"
+        class="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-md bg-ink px-4 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
       >
-        <Plus class="w-4 h-4" />
-        <span>Buat Jurnal Pertemuan</span>
+        <Plus class="h-4 w-4 text-accent-300" aria-hidden="true" />
+        Buat jurnal pertemuan
       </button>
-    </div>
+    </header>
 
     <!-- Filter & Search Bar -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -490,10 +485,12 @@ onMounted(() => {
           </div>
 
           <button
+            type="button"
             @click="showModal = false"
-            class="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-50 transition-colors"
+            class="grid h-11 w-11 place-items-center rounded-md text-ink-muted transition-colors hover:bg-sunken hover:text-ink"
+            aria-label="Tutup formulir jurnal"
           >
-            ✕
+            <X class="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 

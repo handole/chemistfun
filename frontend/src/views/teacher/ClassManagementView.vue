@@ -32,7 +32,7 @@ const addStudentError = ref('')
 const loadClasses = async () => {
   loading.value = true
   try {
-    const res = await api.classes.list()
+    const res = await api.classes.list(null, true)
     classes.value = res || []
     if (classes.value.length > 0 && !selectedClass.value) {
       selectClass(classes.value[0])
@@ -164,20 +164,23 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Header Page -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Page header -->
+    <header class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
-        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Manajemen Kelas Kimia</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1">Kelola kelas, bagikan kode bergabung kepada siswa, dan monitor peserta didik.</p>
+        <h1 class="text-xl font-semibold tracking-tight text-ink">Kelas</h1>
+        <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
+          Buat kelas, bagikan kode pendaftaran, dan lihat siswa yang sudah bergabung.
+        </p>
       </div>
-      <button 
+      <button
+        type="button"
         @click="openCreateModal"
-        class="inline-flex items-center gap-2 bg-chemist-dark hover:bg-slate-900 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 self-start"
+        class="inline-flex min-h-[44px] items-center gap-2 self-start rounded-md bg-ink px-4 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
       >
-        <Plus class="w-4 h-4 text-emerald-400" />
-        <span>Buat Kelas Baru</span>
+        <Plus class="h-4 w-4 text-accent-300" aria-hidden="true" />
+        Buat kelas
       </button>
-    </div>
+    </header>
 
     <!-- Main Content Layout (Split List & Detail) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

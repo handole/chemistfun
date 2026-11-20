@@ -48,7 +48,7 @@ const selectedAttemptForRadar = ref(null)
 const loadClasses = async () => {
   loading.value = true
   try {
-    const res = await api.classes.list()
+    const res = await api.classes.list(null, true)
     classes.value = res || []
     if (classes.value.length > 0) {
       selectedClassId.value = classes.value[0].id
@@ -210,32 +210,39 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Header & Section Tabs -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Page header with section switch -->
+    <header class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
-        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Kuis Evaluasi & Analisis Radar</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1">Buat kuis kompetensi kimia, atur indikator metrik capaian, dan pantau grafik Radar pemahaman siswa.</p>
+        <h1 class="text-xl font-semibold tracking-tight text-ink">Kuis & asesmen</h1>
+        <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
+          Susun soal per indikator metrik, lalu pantau capaian siswa lewat radar kompetensi.
+        </p>
       </div>
 
-      <!-- Tab Switcher -->
-      <div class="flex items-center bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-        <button 
+      <div class="flex items-center gap-1 self-start rounded-md border border-line bg-paper p-1 sm:self-auto" role="tablist" aria-label="Bagian asesmen">
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeSection === 'quiz'"
           @click="activeSection = 'quiz'"
-          class="px-4 py-2 rounded-lg text-xs font-bold transition-all"
-          :class="activeSection === 'quiz' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+          class="min-h-[32px] rounded-sm px-2.5 text-xs transition-colors"
+          :class="activeSection === 'quiz' ? 'bg-surface font-semibold text-ink shadow-2xs' : 'font-medium text-ink-muted hover:text-ink'"
         >
-          Penyusunan Kuis & Soal
+          Penyusunan kuis
         </button>
-        <button 
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeSection === 'analytics'"
           @click="activeSection = 'analytics'"
-          class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
-          :class="activeSection === 'analytics' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+          class="flex min-h-[32px] items-center gap-1.5 rounded-sm px-2.5 text-xs transition-colors"
+          :class="activeSection === 'analytics' ? 'bg-surface font-semibold text-ink shadow-2xs' : 'font-medium text-ink-muted hover:text-ink'"
         >
-          <BarChart3 class="w-3.5 h-3.5 text-chemist-primary" />
-          <span>Hasil & Radar Siswa</span>
+          <BarChart3 class="h-3.5 w-3.5" :class="activeSection === 'analytics' ? 'text-accent' : 'text-ink-faint'" aria-hidden="true" />
+          Hasil & radar
         </button>
       </div>
-    </div>
+    </header>
 
     <!-- Class & Module Filter Bar -->
     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex flex-wrap items-center justify-between gap-4">
@@ -311,7 +318,13 @@ onMounted(() => {
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
             <h3 class="text-base font-bold text-slate-900">Butir Soal Kuis Pilihan Ganda</h3>
-            <p class="text-xs text-slate-400">Soal-soal ini akan dikerjakan siswa secara acak atau berurutan dengan auto-save.</p>
+            <p v-if="quiz" class="text-xs text-ink-muted">
+              {{ quiz.title }}
+              <span class="font-mono">· {{ quiz.time_limit_minutes }} menit · {{ questions.length }} soal</span>
+            </p>
+            <p v-else class="text-xs text-ink-muted">
+              Soal-soal ini dikerjakan siswa dengan auto-save tiap jawaban.
+            </p>
           </div>
 
           <div class="flex items-center gap-2">
@@ -334,21 +347,36 @@ onMounted(() => {
         </div>
 
         <!-- If No Quiz initialized yet -->
-        <div v-if="!quiz" class="py-12 text-center space-y-2">
-          <CheckSquare class="w-10 h-10 text-slate-300 mx-auto" />
-          <h4 class="font-bold text-slate-700 text-sm">Kuis Belum Diaktifkan untuk Topik Ini</h4>
-          <p class="text-xs text-slate-400 max-w-sm mx-auto">Klik tombol "Inisialisasi Kuis Baru" di atas untuk mulai membuat kuis dan memasukkan butir soal evaluasi.</p>
+        <div
+          v-if="!quiz"
+          class="flex flex-col items-start gap-2 rounded-lg border border-dashed border-line-strong bg-paper px-4 py-6"
+        >
+          <CheckSquare class="h-5 w-5 text-ink-faint" aria-hidden="true" />
+          <p class="text-sm font-semibold text-ink">Topik ini belum punya kuis</p>
+          <p class="max-w-md text-xs leading-relaxed text-ink-muted">
+            Aktifkan kuis lewat tombol di atas, lalu masukkan butir soal satu per satu.
+          </p>
         </div>
 
         <!-- If Quiz exists but no questions -->
-        <div v-else-if="questions.length === 0" class="py-12 text-center space-y-2 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-          <HelpCircle class="w-8 h-8 text-slate-300 mx-auto" />
-          <p class="text-xs font-bold text-slate-700">Kuis "{{ quiz.title }}" Belum Memiliki Soal</p>
-          <button 
+        <div
+          v-else-if="questions.length === 0"
+          class="flex flex-col items-start gap-2 rounded-lg border border-dashed border-line-strong bg-paper px-4 py-6"
+        >
+          <HelpCircle class="h-5 w-5 text-ink-faint" aria-hidden="true" />
+          <p class="text-sm font-semibold text-ink">
+            {{ quiz.title ? `Kuis ${quiz.title} belum punya soal` : 'Kuis ini belum punya soal' }}
+          </p>
+          <p class="max-w-md text-xs leading-relaxed text-ink-muted">
+            Siswa tidak bisa mengerjakan kuis kosong. Tambahkan minimal satu butir soal.
+          </p>
+          <button
+            type="button"
             @click="showQuestionModal = true"
-            class="text-xs font-bold text-chemist-primary underline"
+            class="mt-1 inline-flex min-h-[40px] items-center gap-1.5 rounded-md bg-ink px-3 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
           >
-            + Tambah Soal Pertama
+            <Plus class="h-3.5 w-3.5 text-accent-300" aria-hidden="true" />
+            Tambah soal pertama
           </button>
         </div>
 

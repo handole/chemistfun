@@ -164,13 +164,15 @@ onUnmounted(() => {
       </button>
 
       <div v-if="!quizResult && !loading && questions.length > 0" class="flex items-center gap-3">
-        <!-- Timer Pill -->
-        <div 
-          :class="timeLeftSeconds < 120 ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse' : 'bg-white text-slate-700 border-slate-200'"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono font-bold shadow-2xs"
+        <!-- Timer: under two minutes it turns to the danger token, no pulse -->
+        <div
+          :class="timeLeftSeconds < 120 ? 'border-danger-200 bg-danger-50 text-danger-700' : 'border-line bg-surface text-ink-soft'"
+          class="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold shadow-2xs"
+          role="timer"
+          :aria-label="'Sisa waktu ' + formattedTime"
         >
-          <Clock class="w-3.5 h-3.5" />
-          <span>{{ formattedTime }}</span>
+          <Clock class="h-3.5 w-3.5" aria-hidden="true" />
+          <span class="kf-readout">{{ formattedTime }}</span>
         </div>
       </div>
     </div>

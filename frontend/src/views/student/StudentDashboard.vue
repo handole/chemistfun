@@ -4,18 +4,13 @@ import {
   BookOpen, 
   FlaskConical, 
   CheckSquare, 
-  Plus, 
-  Search, 
   ChevronRight, 
-  Sparkles, 
   ArrowRight,
-  UserCheck,
   CheckCircle2,
   AlertCircle,
   Play,
   Pause,
   RefreshCw,
-  Check,
   Droplets,
   ChevronLeft
 } from 'lucide-vue-next'
@@ -332,184 +327,175 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Student Header Banner -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-      <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-          <span>Portal Belajar Siswa</span>
-        </div>
-        <h2 class="text-2xl font-bold text-slate-900 tracking-tight">
-          Selamat Datang, {{ user?.full_name || 'Siswa' }}! 👋
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-500 font-normal max-w-xl leading-relaxed">
-          Akses modul belajar kimia, eksperimen di laboratorium maya tanpa risiko, dan selesaikan tugas guided inquiry.
+    <!-- Student header: quiet label, name as the heading, one next action -->
+    <div class="flex flex-col items-start justify-between gap-5 rounded-xl border border-line bg-surface p-5 sm:p-6 md:flex-row md:items-center">
+      <div class="max-w-xl">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Portal belajar</p>
+        <h1 class="mt-1.5 text-xl font-semibold leading-snug tracking-tight text-ink sm:text-2xl">
+          {{ user?.full_name || 'Siswa' }}
+        </h1>
+        <p class="mt-2 text-sm leading-relaxed text-ink-muted">
+          Baca modul, coba praktikum di laboratorium maya tanpa risiko bahan kimia, lalu kerjakan kuis modul untuk
+          melihat capaianmu.
         </p>
       </div>
 
       <!-- Active Class Badge / Selector (Jika punya kelas) -->
-      <div v-if="classes.length > 0" class="w-full md:w-auto bg-slate-50 border border-slate-200/80 p-3 rounded-2xl flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-chemist-primary/10 text-chemist-primary flex items-center justify-center font-bold shrink-0">
-          <BookOpen class="w-5 h-5" />
-        </div>
-        <div>
-          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kelas Terdaftar</span>
-          <select
-            v-if="classes.length > 1"
-            :value="selectedClass?.id"
-            @change="(e) => selectClass(classes.find(c => c.id === parseInt(e.target.value)))"
-            class="bg-transparent font-bold text-slate-900 text-sm outline-none cursor-pointer pr-4"
-          >
-            <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-          <span v-else class="text-sm font-bold text-slate-900 block">{{ selectedClass?.name || classes[0].name }}</span>
-          <span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-            <CheckCircle2 class="w-3 h-3" />
-            <span>Kelas {{ selectedClass?.grade_level || classes[0].grade_level }} Kimia Aktif</span>
+      <div v-if="classes.length > 0" class="w-full rounded-lg border border-line bg-paper p-3 md:w-auto">
+        <div class="flex items-center gap-2.5">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-accent-50 text-accent">
+            <BookOpen class="h-4 w-4" aria-hidden="true" />
           </span>
+          <div class="min-w-0">
+            <label for="student-class-select" class="block text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">
+              Kelas terdaftar
+            </label>
+            <select
+              v-if="classes.length > 1"
+              id="student-class-select"
+              :value="selectedClass?.id"
+              @change="(e) => selectClass(classes.find(c => c.id === parseInt(e.target.value)))"
+              class="max-w-full cursor-pointer truncate rounded-sm bg-transparent pr-4 text-sm font-semibold text-ink outline-none"
+            >
+              <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+            <span v-else class="block truncate text-sm font-semibold text-ink">{{ selectedClass?.name || classes[0].name }}</span>
+          </div>
         </div>
+        <p class="mt-2 flex items-center gap-1 text-[11px] font-medium text-success-700">
+          <CheckCircle2 class="h-3 w-3" aria-hidden="true" />
+          Aktif, kelas {{ selectedClass?.grade_level || classes[0].grade_level }}
+        </p>
       </div>
 
       <!-- Quick Action: Join Class by Code (Hanya tampil jika belum punya kelas) -->
-      <div v-else class="w-full md:w-80 bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-2.5">
-        <span class="text-xs font-bold text-slate-800 block">Gabung Kelas Baru</span>
+      <div v-else class="w-full space-y-2.5 rounded-lg border border-line bg-paper p-4 md:w-80">
+        <label for="student-enroll-code" class="block text-xs font-semibold text-ink-soft">Gabung kelas</label>
         <div class="flex gap-2">
           <input
+            id="student-enroll-code"
             v-model="enrollCode"
             type="text"
-            placeholder="Kode kelas (cth: CHEM-7X)"
-            class="flex-1 bg-white border border-slate-200 text-xs px-3 py-2 rounded-xl outline-none font-mono uppercase"
+            placeholder="Contoh: CHEM-7X"
+            class="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs uppercase text-ink outline-none transition-colors placeholder:font-sans placeholder:normal-case placeholder:text-ink-faint focus:border-accent"
           />
           <button
+            type="button"
             @click="handleEnrollByCode"
             :disabled="enrollLoading || !enrollCode"
-            class="bg-chemist-dark hover:bg-slate-900 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-2xs"
+            class="min-h-[38px] rounded-md bg-ink px-3.5 text-xs font-semibold text-white transition-colors hover:bg-ink-soft disabled:opacity-50"
           >
-            {{ enrollLoading ? '...' : 'Gabung' }}
+            {{ enrollLoading ? 'Memproses' : 'Gabung' }}
           </button>
         </div>
 
-        <div v-if="enrollMessage.text" :class="enrollMessage.type === 'success' ? 'text-emerald-600' : 'text-rose-600'" class="text-[11px] font-medium flex items-center gap-1.5">
-          <CheckCircle2 v-if="enrollMessage.type === 'success'" class="w-3.5 h-3.5" />
-          <AlertCircle v-else class="w-3.5 h-3.5" />
-          <span>{{ enrollMessage.text }}</span>
-        </div>
+        <p v-if="enrollMessage.text" :class="enrollMessage.type === 'success' ? 'text-success-700' : 'text-danger-700'" class="flex items-center gap-1.5 text-[11px] font-medium">
+          <component :is="enrollMessage.type === 'success' ? CheckCircle2 : AlertCircle" class="h-3.5 w-3.5" aria-hidden="true" />
+          {{ enrollMessage.text }}
+        </p>
       </div>
     </div>
 
-    <!-- Student Navigation Tab -->
-    <div class="flex items-center gap-2 border-b border-slate-200 pb-3">
+    <!-- Section tabs: current state marked by rule and weight, not colour alone -->
+    <div class="flex flex-wrap items-center gap-1 border-b border-line" role="tablist" aria-label="Bagian portal belajar">
       <button
-        @click="activeTab = 'overview'"
-        :class="[
-          'px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2',
-          activeTab === 'overview'
-            ? 'bg-chemist-dark text-white shadow-sm'
-            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+        v-for="tab in [
+          { id: 'overview', label: 'Modul & materi', icon: BookOpen },
+          { id: 'lab', label: 'Laboratorium', icon: FlaskConical },
+          { id: 'quiz', label: 'Kuis & asesmen', icon: CheckSquare }
         ]"
+        :key="tab.id"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === tab.id"
+        @click="activeTab = tab.id; if (tab.id === 'quiz') takingQuiz = false"
+        class="-mb-px flex min-h-[44px] items-center gap-2 border-b-2 px-3 text-xs transition-colors"
+        :class="
+          activeTab === tab.id
+            ? 'border-accent font-semibold text-ink'
+            : 'border-transparent font-medium text-ink-muted hover:border-line-strong hover:text-ink'
+        "
       >
-        <BookOpen class="w-4 h-4" />
-        <span>Modul & Materi Pembelajaran</span>
-      </button>
-
-      <button
-        @click="activeTab = 'lab'"
-        :class="[
-          'px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2',
-          activeTab === 'lab'
-            ? 'bg-chemist-dark text-white shadow-sm'
-            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-        ]"
-      >
-        <FlaskConical class="w-4 h-4" />
-        <span>Laboratorium Virtual (Praktikum Siswa)</span>
-      </button>
-
-      <button
-        @click="activeTab = 'quiz'; takingQuiz = false"
-        :class="[
-          'px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2',
-          activeTab === 'quiz'
-            ? 'bg-chemist-dark text-white shadow-sm'
-            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-        ]"
-      >
-        <CheckSquare class="w-4 h-4" />
-        <span>Kuis & Asesmen Radar</span>
+        <component :is="tab.icon" class="h-4 w-4" :class="activeTab === tab.id ? 'text-accent' : 'text-ink-faint'" aria-hidden="true" />
+        {{ tab.label }}
       </button>
     </div>
 
     <!-- VIEW 1: Overview & Learning Content -->
     <div v-if="activeTab === 'overview'" class="space-y-6">
       <!-- Empty state if student has no classes -->
-      <div v-if="classes.length === 0" class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-3">
-        <BookOpen class="w-12 h-12 text-slate-300 mx-auto" />
-        <h3 class="text-base font-bold text-slate-800">Kamu Belum Terdaftar di Kelas Manapun</h3>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-          Minta kode kelas dari gurumu, lalu masukkan pada formulir "Gabung Kelas Baru" di atas.
+      <div v-if="classes.length === 0" class="space-y-3 rounded-xl border border-line bg-surface p-10 text-center">
+        <BookOpen class="mx-auto h-10 w-10 text-ink-faint" aria-hidden="true" />
+        <h2 class="text-sm font-semibold text-ink">Belum terdaftar di kelas mana pun</h2>
+        <p class="mx-auto max-w-sm text-xs leading-relaxed text-ink-muted">
+          Minta kode pendaftaran dari gurumu, lalu masukkan pada formulir gabung kelas di bagian atas halaman.
         </p>
       </div>
 
       <!-- Class & Modules Grid -->
       <div v-else class="space-y-4">
         <!-- Materials Content -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-3">
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-chemist-primary px-2.5 py-1 rounded-md">
+        <div class="space-y-5 rounded-xl border border-line bg-surface p-5">
+          <div class="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-sm bg-accent-50 px-2 py-0.5 text-[11px] font-semibold text-accent-700">
                   Kelas {{ selectedClass?.grade_level || classes[0]?.grade_level }}
                 </span>
-                <span v-if="modules.length > 0" class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">
-                  Modul {{ currentModuleIndex + 1 }} dari {{ modules.length }}
+                <span v-if="modules.length > 0" class="kf-readout rounded-sm bg-sunken px-2 py-0.5 text-[11px] font-medium text-ink-muted">
+                  Modul {{ currentModuleIndex + 1 }} / {{ modules.length }}
                 </span>
-                <span v-if="materials.length > 0" class="text-[10px] font-semibold text-slate-400">
-                  {{ materials.length }} Materi
+                <span v-if="materials.length > 0" class="text-[11px] text-ink-faint">
+                  {{ materials.length }} materi
                 </span>
               </div>
-              <h3 class="text-lg font-bold text-slate-900 mt-2">{{ selectedModule?.title || 'Pilih Modul' }}</h3>
-              <p class="text-xs text-slate-400">Materi teori dan panduan praktikum laboratorium</p>
+              <h2 class="mt-2 text-base font-semibold text-ink">{{ selectedModule?.title || 'Pilih modul' }}</h2>
+              <p class="mt-0.5 text-xs text-ink-muted">Materi teori dan panduan praktikum laboratorium</p>
             </div>
 
-            <!-- Quick Module Navigation & Actions -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <div v-if="modules.length > 1" class="flex items-center gap-1 bg-slate-50 border border-slate-200 p-1 rounded-xl">
+            <!-- Module step and the two actions available for this module -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div v-if="modules.length > 1" class="flex items-center rounded-md border border-line bg-paper">
                 <button
+                  type="button"
                   @click="goToPrevModule"
                   :disabled="!prevModule"
-                  class="p-1.5 hover:bg-white rounded-lg text-slate-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                  title="Modul Sebelumnya"
+                  class="grid h-9 w-9 place-items-center rounded-l-md text-ink-muted transition-colors hover:bg-sunken disabled:opacity-40"
+                  aria-label="Modul sebelumnya"
                 >
-                  <ChevronLeft class="w-4 h-4" />
+                  <ChevronLeft class="h-4 w-4" aria-hidden="true" />
                 </button>
-                <span class="text-xs font-semibold px-2 text-slate-700">
-                  Modul {{ currentModuleIndex + 1 }}/{{ modules.length }}
+                <span class="kf-readout border-x border-line px-2 text-[11px] font-medium text-ink-muted">
+                  {{ currentModuleIndex + 1 }}/{{ modules.length }}
                 </span>
                 <button
+                  type="button"
                   @click="goToNextModule"
                   :disabled="!nextModule"
-                  class="p-1.5 hover:bg-white rounded-lg text-slate-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                  title="Modul Selanjutnya"
+                  class="grid h-9 w-9 place-items-center rounded-r-md text-ink-muted transition-colors hover:bg-sunken disabled:opacity-40"
+                  aria-label="Modul selanjutnya"
                 >
-                  <ChevronRight class="w-4 h-4" />
+                  <ChevronRight class="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
 
               <button
                 v-if="activeQuiz"
+                type="button"
                 @click="startTakingQuiz(activeQuiz)"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-all shadow-2xs"
+                class="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-line bg-surface px-3 text-xs font-semibold text-ink-soft transition-colors hover:bg-sunken"
               >
-                <CheckSquare class="w-3.5 h-3.5" />
-                <span>Kerjakan Kuis</span>
+                <CheckSquare class="h-3.5 w-3.5" aria-hidden="true" />
+                Kerjakan kuis
               </button>
 
               <button
+                type="button"
                 @click="openVirtualLab(selectedMaterial)"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-chemist-primary hover:bg-blue-600 text-white rounded-xl text-xs font-semibold transition-all shadow-2xs"
+                class="inline-flex min-h-[38px] items-center gap-1.5 rounded-md bg-accent px-3 text-xs font-semibold text-white transition-colors hover:bg-accent-700"
               >
-                <FlaskConical class="w-3.5 h-3.5" />
-                <span>Buka Lab Virtual</span>
+                <FlaskConical class="h-3.5 w-3.5" aria-hidden="true" />
+                Buka lab
               </button>
             </div>
           </div>
@@ -520,230 +506,233 @@ onMounted(() => {
               v-for="(mat, matIdx) in materials"
               :key="mat.id"
               :class="[
-                'border rounded-xl p-4 space-y-2 transition-all',
+                'space-y-2 rounded-lg border p-4 transition-colors',
                 selectedMaterial?.id === mat.id
-                  ? 'border-chemist-primary/60 bg-blue-50/20 ring-1 ring-chemist-primary/30'
-                  : 'border-slate-100 bg-slate-50/50'
+                  ? 'border-accent bg-accent-50/60'
+                  : 'border-line bg-paper hover:bg-sunken'
               ]"
             >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span 
-                    class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                    :class="selectedMaterial?.id === mat.id ? 'bg-chemist-primary text-white' : 'bg-slate-200 text-slate-600'"
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex min-w-0 items-center gap-2.5">
+                  <span
+                    class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold"
+                    :class="selectedMaterial?.id === mat.id ? 'bg-accent text-white' : 'bg-sunken text-ink-muted'"
                   >
                     {{ matIdx + 1 }}
                   </span>
-                  <h4 class="text-sm font-bold text-slate-800">{{ mat.title }}</h4>
+                  <h3 class="truncate text-sm font-semibold text-ink">{{ mat.title }}</h3>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex shrink-0 items-center gap-3">
                   <button
                     v-if="selectedMaterial?.id !== mat.id"
+                    type="button"
                     @click="selectedMaterial = mat"
-                    class="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+                    class="min-h-[32px] text-xs font-semibold text-ink-muted transition-colors hover:text-ink"
                   >
-                    Buka Rincian
+                    Buka rincian
                   </button>
                   <button
+                    type="button"
                     @click="openVirtualLab(mat)"
-                    class="text-xs text-chemist-primary hover:underline font-semibold flex items-center gap-1"
+                    class="flex min-h-[32px] items-center gap-1 text-xs font-semibold text-accent transition-colors hover:underline"
                   >
-                    <span>Mulai Praktikum</span>
-                    <ArrowRight class="w-3 h-3" />
+                    Mulai praktikum
+                    <ArrowRight class="h-3 w-3" aria-hidden="true" />
                   </button>
                 </div>
               </div>
 
-              <div 
+              <div
                 v-if="mat.content_html"
-                class="text-xs text-slate-600 leading-relaxed prose prose-sm max-w-none pt-2 border-t border-slate-200/50"
+                class="border-t border-line/70 pt-2 text-xs leading-relaxed text-ink-soft"
                 v-html="renderFormula(mat.content_html)"
               ></div>
-              <p v-else class="text-xs text-slate-400 italic">Belum ada penjelasan tertulis pada materi ini.</p>
+              <p v-else class="text-xs italic text-ink-faint">Belum ada penjelasan tertulis pada materi ini.</p>
             </div>
 
-            <!-- Material Stage Navigation Controls -->
-            <div class="pt-2 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+            <!-- Step controls: previous, position, next -->
+            <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-paper p-3">
               <button
+                type="button"
                 @click="goToPrevMaterial"
                 :disabled="!prevMaterial"
-                class="px-3 py-1.5 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition-all shadow-2xs"
+                class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-sunken disabled:opacity-40"
               >
-                <ChevronLeft class="w-3.5 h-3.5" />
-                <span>Materi Sebelumnya</span>
+                <ChevronLeft class="h-3.5 w-3.5" aria-hidden="true" />
+                Materi sebelumnya
               </button>
 
-              <span class="text-xs font-medium text-slate-500">
-                Materi <b>{{ currentMaterialIndex + 1 }}</b> dari <b>{{ materials.length }}</b>
+              <span class="kf-readout text-[11px] font-medium text-ink-muted">
+                {{ currentMaterialIndex + 1 }} / {{ materials.length }}
               </span>
 
               <button
                 v-if="nextMaterial"
+                type="button"
                 @click="goToNextMaterial"
-                class="px-3.5 py-1.5 bg-chemist-primary hover:bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-accent px-3 text-xs font-semibold text-white transition-colors hover:bg-accent-700"
               >
-                <span>Materi Selanjutnya</span>
-                <ChevronRight class="w-3.5 h-3.5" />
+                Materi selanjutnya
+                <ChevronRight class="h-3.5 w-3.5" aria-hidden="true" />
               </button>
 
               <button
                 v-else-if="nextModule"
+                type="button"
                 @click="goToNextModule"
-                class="px-3.5 py-1.5 bg-chemist-dark hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-ink px-3 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
               >
-                <span>Lanjut ke Modul Berikutnya</span>
-                <ChevronRight class="w-3.5 h-3.5" />
+                Modul berikutnya
+                <ChevronRight class="h-3.5 w-3.5" aria-hidden="true" />
               </button>
 
               <button
                 v-else-if="activeQuiz"
+                type="button"
                 @click="startTakingQuiz(activeQuiz)"
-                class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-accent px-3 text-xs font-semibold text-white transition-colors hover:bg-accent-700"
               >
-                <CheckSquare class="w-3.5 h-3.5" />
-                <span>Selesai Belajar, Ikuti Kuis</span>
+                <CheckSquare class="h-3.5 w-3.5" aria-hidden="true" />
+                Lanjut ke kuis
               </button>
-              <div v-else class="text-xs font-bold text-emerald-600">
-                ✓ Selesai Semua Materi
-              </div>
+              <span v-else class="inline-flex items-center gap-1.5 text-xs font-semibold text-success-700">
+                <CheckCircle2 class="h-3.5 w-3.5" aria-hidden="true" />
+                Semua materi selesai
+              </span>
             </div>
           </div>
 
-          <div v-else class="text-center py-8 text-xs text-slate-400">
-            Belum ada materi pada modul ini.
-          </div>
+          <p v-else class="py-8 text-center text-xs text-ink-muted">
+            Modul ini belum punya materi. Hubungi gurumu untuk mempublikasikan materinya.
+          </p>
         </div>
       </div>
     </div>
 
     <!-- VIEW 2: Virtual Lab Student View -->
     <div v-else-if="activeTab === 'lab'" class="space-y-4">
-      <div class="bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-        <div class="flex items-center gap-3">
-          <div>
-            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Laboratorium Siswa</span>
-            <h3 class="text-sm font-bold text-slate-900">
-              {{ selectedMaterial ? selectedMaterial.title : 'Praktikum Kimia Mandiri' }}
-            </h3>
+      <div class="flex flex-col justify-between gap-3 rounded-xl border border-line bg-surface p-4 sm:flex-row sm:items-center">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="min-w-0">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Laboratorium</p>
+            <h2 class="mt-0.5 truncate text-sm font-semibold text-ink">
+              {{ selectedMaterial ? selectedMaterial.title : 'Praktikum kimia mandiri' }}
+            </h2>
           </div>
-          <!-- Switch mode badge if custom lab from teacher exists -->
-          <div v-if="customLabConfig" class="flex gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+          <!-- Two labs can exist for one material; the switch marks which is live -->
+          <div v-if="customLabConfig" class="flex gap-1 rounded-md border border-line bg-paper p-1 text-xs" role="tablist" aria-label="Pilih laboratorium">
             <button
+              type="button"
+              role="tab"
+              :aria-selected="labMode === 'custom'"
               @click="labMode = 'custom'"
-              :class="labMode === 'custom' ? 'bg-white shadow-2xs font-bold text-slate-800' : 'text-slate-500'"
-              class="px-2.5 py-1 rounded-lg transition-all"
+              class="min-h-[32px] max-w-[11rem] truncate rounded-sm px-2 font-medium transition-colors"
+              :class="labMode === 'custom' ? 'bg-surface font-semibold text-ink shadow-2xs' : 'text-ink-muted hover:text-ink'"
             >
-              Lab Guru: {{ customLabConfig.config_data?.lab_title || 'Titrasi' }}
+              {{ customLabConfig.config_data?.lab_title || 'Lab dari guru' }}
             </button>
             <button
+              type="button"
+              role="tab"
+              :aria-selected="labMode === 'stoichiometry'"
               @click="labMode = 'stoichiometry'"
-              :class="labMode === 'stoichiometry' ? 'bg-white shadow-2xs font-bold text-slate-800' : 'text-slate-500'"
-              class="px-2.5 py-1 rounded-lg transition-all"
+              class="min-h-[32px] rounded-sm px-2 font-medium transition-colors"
+              :class="labMode === 'stoichiometry' ? 'bg-surface font-semibold text-ink shadow-2xs' : 'text-ink-muted hover:text-ink'"
             >
-              Lab Standar Stoikiometri
+              Stoikiometri
             </button>
           </div>
         </div>
 
         <button
+          type="button"
           @click="activeTab = 'overview'"
-          class="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 self-start sm:self-center"
+          class="inline-flex min-h-[36px] items-center gap-1.5 self-start rounded-md border border-line px-2.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-sunken sm:self-center"
         >
-          ← Kembali ke Materi
+          <ChevronLeft class="h-3.5 w-3.5" aria-hidden="true" />
+          Kembali ke materi
         </button>
       </div>
 
-      <!-- Custom Lab Simulation (Configured by Teacher) -->
-      <div v-if="labMode === 'custom' && customLabConfig" class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-card space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <!-- Custom lab configured by the teacher: live measurement sheet -->
+      <div v-if="labMode === 'custom' && customLabConfig" class="space-y-5 rounded-xl border border-line bg-surface p-5">
+        <div class="flex flex-col justify-between gap-4 border-b border-line pb-4 md:flex-row md:items-center">
           <div>
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold mb-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Eksperimen Aktif</span>
-            </div>
-            <h2 class="text-lg font-bold text-slate-900">{{ customLabConfig.config_data?.lab_title }}</h2>
-            <p class="text-xs text-slate-500">{{ customLabConfig.config_data?.instructions || 'Ikuti petunjuk praktikum untuk menyelesaikan simulasi.' }}</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Praktikum titrasi</p>
+            <h2 class="mt-0.5 text-base font-semibold text-ink">{{ customLabConfig.config_data?.lab_title }}</h2>
+            <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+              {{ customLabConfig.config_data?.instructions || 'Ikuti petunjuk praktikum untuk menyelesaikan simulasi.' }}
+            </p>
           </div>
 
-          <div class="flex gap-2">
-            <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center">
-              <span class="block text-[10px] text-slate-400 font-bold uppercase">Analit</span>
-              <span class="text-xs font-bold text-slate-800">{{ customLabConfig.config_data?.solution_name }} ({{ customLabConfig.config_data?.solution_molarity }}M)</span>
+          <div class="flex flex-wrap gap-2">
+            <div class="rounded-md border border-line bg-paper px-3 py-2">
+              <span class="block text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Analit</span>
+              <span class="block text-xs font-semibold text-ink">{{ customLabConfig.config_data?.solution_name }} ({{ customLabConfig.config_data?.solution_molarity }}M)</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center">
-              <span class="block text-[10px] text-slate-400 font-bold uppercase">Titran</span>
-              <span class="text-xs font-bold text-slate-800">{{ customLabConfig.config_data?.titrant_name }} ({{ customLabConfig.config_data?.titrant_molarity }}M)</span>
+            <div class="rounded-md border border-line bg-paper px-3 py-2">
+              <span class="block text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Titran</span>
+              <span class="block text-xs font-semibold text-ink">{{ customLabConfig.config_data?.titrant_name }} ({{ customLabConfig.config_data?.titrant_molarity }}M)</span>
             </div>
           </div>
         </div>
 
-        <!-- Student Interaction Titration Canvas -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <!-- Left: Simulation Canvas (7 Cols) -->
-          <div class="lg:col-span-7 bg-slate-50 rounded-2xl border border-slate-200/80 p-5 space-y-4">
+        <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
+          <!-- Simulation canvas -->
+          <div class="space-y-4 rounded-lg border border-line bg-paper p-5 lg:col-span-7">
             <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-slate-700">Simulasi Titrasi Langsung</span>
-              <button 
+              <span class="font-semibold text-ink">Simulasi titrasi</span>
+              <button
+                type="button"
                 @click="resetStudentSimulation"
-                class="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-200/60 transition-colors flex items-center gap-1 font-semibold"
-                title="Reset Percobaan"
+                class="inline-flex min-h-[32px] items-center gap-1 rounded-md px-1.5 text-xs font-semibold text-ink-muted transition-colors hover:bg-sunken hover:text-ink"
               >
-                <RefreshCw class="w-3.5 h-3.5" />
-                <span>Reset</span>
+                <RefreshCw class="h-3.5 w-3.5" aria-hidden="true" />
+                Reset
               </button>
             </div>
 
-            <!-- Beaker & Titration Apparatus Canvas -->
-            <div class="h-72 bg-gradient-to-b from-slate-100 to-slate-50 rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden">
-              <!-- Buret tip above -->
-              <div class="absolute top-2 w-3.5 h-20 bg-slate-300 rounded-b flex flex-col justify-end items-center shadow-xs">
-                <span v-if="studentIsTitrating" class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping mb-1"></span>
-              </div>
+            <!-- Flat apparatus area; the liquid colour is the only gradient in the sheet -->
+            <div class="relative flex h-72 items-center justify-center overflow-hidden rounded-lg border border-line bg-sunken">
+              <div class="absolute left-1/2 top-0 h-16 w-2.5 -translate-x-1/2 rounded-b-sm bg-ink-faint" aria-hidden="true"></div>
 
-              <!-- Erlenmeyer Flask Simulation -->
-              <div class="w-40 h-48 relative flex flex-col items-center justify-end">
-                <!-- Flask Neck -->
-                <div class="w-10 h-14 border-l-2 border-r-2 border-slate-400 bg-transparent z-10"></div>
-                
-                <!-- Flask Body (Triangular Trapeze) -->
-                <div 
-                  class="w-40 h-34 border-2 border-slate-400 rounded-b-2xl relative overflow-hidden flex flex-col justify-end p-1 transition-colors duration-500 shadow-inner"
+              <div class="relative flex h-48 w-40 flex-col items-center justify-end">
+                <div class="z-10 h-14 w-10 border-l-2 border-r-2 border-ink-faint bg-transparent" aria-hidden="true"></div>
+                <div
+                  class="relative flex h-32 w-40 flex-col justify-end overflow-hidden rounded-b-lg border-2 border-ink-faint transition-colors duration-500"
                   :style="{ backgroundColor: studentLiquidColor }"
+                  role="img"
+                  :aria-label="'Labu erlenmeyer terisi larutan, pH ' + studentPhValue"
                 >
-                  <!-- Liquid level wave -->
-                  <div 
-                    class="w-full rounded-b-xl transition-all duration-300 relative"
-                    :style="{ 
-                      height: `${Math.min(25 + studentLabVolume * 1.3, 92)}%`, 
-                      backgroundColor: studentLiquidColor 
+                  <div
+                    class="w-full rounded-b-md transition-all duration-300"
+                    :style="{
+                      height: Math.min(25 + studentLabVolume * 1.3, 92) + '%',
+                      backgroundColor: studentLiquidColor
                     }"
-                  >
-                    <div v-if="studentIsTitrating" class="absolute inset-0 bg-white/20 animate-pulse"></div>
-                  </div>
-
-                  <!-- Measurement Lines -->
-                  <div class="absolute left-2 top-4 text-[9px] font-mono text-slate-400 space-y-2 pointer-events-none">
-                    <div>- 50ml</div>
-                    <div>- 25ml</div>
-                    <div>- 10ml</div>
+                  ></div>
+                  <div class="kf-readout absolute left-2 top-3 space-y-2 text-[9px] text-ink-faint">
+                    <p>50 mL</p>
+                    <p>25 mL</p>
+                    <p>10 mL</p>
                   </div>
                 </div>
               </div>
 
-              <!-- Floating Telemetry Card -->
-              <div class="absolute right-3 bottom-3 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-sm text-xs space-y-1.5 max-w-[180px]">
+              <!-- Live readings pinned to the apparatus -->
+              <div class="absolute bottom-3 right-3 max-w-[11.5rem] space-y-1.5 rounded-md border border-line bg-surface p-2.5 text-xs shadow-card">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-slate-400 text-[11px]">pH Larutan:</span>
-                  <span class="font-mono font-bold text-slate-900 text-sm">{{ studentPhValue }}</span>
+                  <span class="text-[11px] text-ink-muted">pH larutan</span>
+                  <span class="kf-readout text-sm font-semibold text-ink">{{ studentPhValue }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-slate-400 text-[11px]">Titran Masuk:</span>
-                  <span class="font-mono font-bold text-chemist-primary text-sm">{{ studentLabVolume }} mL</span>
+                  <span class="text-[11px] text-ink-muted">Titran masuk</span>
+                  <span class="kf-readout text-sm font-semibold text-accent">{{ studentLabVolume }} mL</span>
                 </div>
-                <div class="pt-1 border-t border-slate-100">
-                  <span 
-                    class="text-[10px] font-bold px-1.5 py-0.5 rounded block text-center truncate"
-                    :class="studentLabVolume >= studentEqVolume ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'"
+                <div class="border-t border-line pt-1.5">
+                  <span
+                    class="block truncate rounded-sm px-1.5 py-0.5 text-center text-[10px] font-semibold"
+                    :class="studentLabVolume >= studentEqVolume ? 'bg-success-50 text-success-700' : 'bg-accent-50 text-accent-700'"
                   >
                     {{ studentReactionStatus }}
                   </span>
@@ -751,99 +740,103 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Controls for Student -->
-            <div class="space-y-3 pt-1">
-              <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
-                <span>Aliran Kran Buret (Volume Titran):</span>
-                <span class="font-mono font-bold text-slate-900">{{ studentLabVolume }} / {{ customLabConfig.config_data?.max_volume_ml || 50 }} mL</span>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <label for="student-buret-range" class="font-semibold text-ink">Volume titran</label>
+                <span class="kf-readout text-xs font-semibold text-ink">
+                  {{ studentLabVolume }} / {{ customLabConfig.config_data?.max_volume_ml || 50 }} mL
+                </span>
               </div>
 
-              <input 
-                type="range" 
-                min="0" 
-                :max="customLabConfig.config_data?.max_volume_ml || 50" 
+              <input
+                id="student-buret-range"
+                type="range"
+                min="0"
+                :max="customLabConfig.config_data?.max_volume_ml || 50"
                 step="0.5"
                 v-model.number="studentLabVolume"
-                class="w-full accent-chemist-primary cursor-pointer"
+                class="w-full accent-accent"
               />
 
-              <div class="flex items-center gap-2 pt-1 flex-wrap sm:flex-nowrap">
-                <button 
+              <div class="flex flex-wrap gap-2 pt-1 sm:flex-nowrap">
+                <button
+                  type="button"
                   @click="toggleStudentTitration"
-                  class="flex-1 py-2 px-3 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2 shadow-2xs"
-                  :class="studentIsTitrating ? 'bg-rose-500 hover:bg-rose-600' : 'bg-chemist-primary hover:bg-blue-600'"
+                  class="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-md text-xs font-semibold text-white transition-colors"
+                  :class="studentIsTitrating ? 'bg-danger-600 hover:bg-danger-700' : 'bg-accent hover:bg-accent-700'"
+                  :aria-pressed="studentIsTitrating"
                 >
-                  <Pause v-if="studentIsTitrating" class="w-3.5 h-3.5" />
-                  <Play v-else class="w-3.5 h-3.5" />
-                  <span>{{ studentIsTitrating ? 'Tutup Kran Buret' : 'Buka Kran Otomatis' }}</span>
+                  <component :is="studentIsTitrating ? Pause : Play" class="h-3.5 w-3.5" aria-hidden="true" />
+                  {{ studentIsTitrating ? 'Tutup kran buret' : 'Buka kran buret' }}
                 </button>
 
-                <button 
+                <button
+                  type="button"
                   @click="addStudentDrop"
-                  class="py-2 px-3 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 flex items-center gap-1.5 shadow-2xs"
-                  title="Tambah tetesan 0.5 mL"
+                  class="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-line bg-surface px-3 text-xs font-semibold text-ink-soft transition-colors hover:bg-sunken"
                 >
-                  <Droplets class="w-3.5 h-3.5 text-sky-500" />
-                  <span>+0.5 mL</span>
+                  <Droplets class="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                  Tambah 0,5 mL
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Right: Observation & Analysis Sheet (5 Cols) -->
-          <div class="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
-            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Lembar Data Pengamatan Praktikum</span>
+          <!-- Observation sheet -->
+          <div class="space-y-4 rounded-lg border border-line bg-surface p-5 lg:col-span-5">
+            <h4 class="text-xs font-semibold uppercase tracking-[0.04em] text-ink-faint">
+              Lembar data pengamatan
             </h4>
 
             <div class="space-y-3 text-xs">
               <div class="grid grid-cols-2 gap-2">
-                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-400 block font-medium">Warna Awal</span>
-                  <div class="flex items-center gap-1.5 mt-1">
-                    <span 
-                      class="w-3.5 h-3.5 rounded-full border border-slate-300"
+                <div class="rounded-md border border-line bg-paper p-2.5">
+                  <span class="block text-[10px] font-medium text-ink-muted">Warna awal</span>
+                  <div class="mt-1 flex items-center gap-1.5">
+                    <span
+                      class="h-3.5 w-3.5 rounded-full border border-line-strong"
                       :style="{ backgroundColor: customLabConfig.config_data?.color_start || '#F8FAFC' }"
+                      aria-hidden="true"
                     ></span>
-                    <span class="font-mono text-[11px] text-slate-700 font-semibold truncate">{{ customLabConfig.config_data?.color_start || '#F8FAFC' }}</span>
+                    <span class="kf-readout truncate text-[11px] font-medium text-ink-soft">{{ customLabConfig.config_data?.color_start || 'Larutan tanpa warna' }}</span>
                   </div>
                 </div>
 
-                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                  <span class="text-[10px] text-slate-400 block font-medium">Warna Titik Akhir</span>
-                  <div class="flex items-center gap-1.5 mt-1">
-                    <span 
-                      class="w-3.5 h-3.5 rounded-full border border-slate-300"
+                <div class="rounded-md border border-line bg-paper p-2.5">
+                  <span class="block text-[10px] font-medium text-ink-muted">Warna titik akhir</span>
+                  <div class="mt-1 flex items-center gap-1.5">
+                    <span
+                      class="h-3.5 w-3.5 rounded-full border border-line-strong"
                       :style="{ backgroundColor: customLabConfig.config_data?.color_end || '#F472B6' }"
+                      aria-hidden="true"
                     ></span>
-                    <span class="font-mono text-[11px] text-slate-700 font-semibold truncate">{{ customLabConfig.config_data?.color_end || '#F472B6' }}</span>
+                    <span class="kf-readout truncate text-[11px] font-medium text-ink-soft">{{ customLabConfig.config_data?.color_end || '#F472B6' }}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                <span class="text-[10px] text-slate-400 block font-medium">Indikator Terpasang</span>
-                <span class="font-semibold text-slate-800">{{ customLabConfig.config_data?.indicator_type || 'Phenolphthalein (PP)' }}</span>
+              <div class="space-y-1 rounded-md border border-line bg-paper p-3">
+                <span class="block text-[10px] font-medium text-ink-muted">Indikator terpasang</span>
+                <span class="font-semibold text-ink">{{ customLabConfig.config_data?.indicator_type || 'Phenolphthalein (PP)' }}</span>
               </div>
 
-              <!-- Titration Telemetry Data -->
-              <div class="p-3 bg-blue-50/50 border border-blue-200/60 rounded-xl space-y-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Hasil Pengamatan Buret</span>
-                <div class="grid grid-cols-2 gap-2 text-xs">
+              <!-- Live readings, same values as the apparatus -->
+              <div class="space-y-2 rounded-md border border-accent-line bg-accent-50/60 p-3">
+                <span class="block text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-muted">Hasil pengamatan buret</span>
+                <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <span class="text-[10px] text-slate-400 block">Volume Terukur</span>
-                    <span class="font-mono font-bold text-slate-900 text-sm">{{ studentLabVolume }} mL</span>
+                    <span class="block text-[10px] text-ink-muted">Volume terukur</span>
+                    <span class="kf-readout text-sm font-semibold text-ink">{{ studentLabVolume }} mL</span>
                   </div>
                   <div>
-                    <span class="text-[10px] text-slate-400 block">pH Larutan</span>
-                    <span class="font-mono font-bold text-slate-900 text-sm">{{ studentPhValue }}</span>
+                    <span class="block text-[10px] text-ink-muted">pH larutan</span>
+                    <span class="kf-readout text-sm font-semibold text-ink">{{ studentPhValue }}</span>
                   </div>
                 </div>
-                <div class="pt-1.5 border-t border-blue-200/40">
-                  <span class="text-[11px] font-medium text-slate-700">
-                    Status: <b :class="studentLabVolume >= studentEqVolume ? 'text-pink-600' : 'text-blue-600'">{{ studentReactionStatus }}</b>
-                  </span>
-                </div>
+                <p class="border-t border-accent-line pt-1.5 text-[11px] text-ink-soft">
+                  Status:
+                  <b :class="studentLabVolume >= studentEqVolume ? 'text-success-700' : 'text-accent-700'">{{ studentReactionStatus }}</b>
+                </p>
               </div>
             </div>
           </div>
@@ -867,119 +860,118 @@ onMounted(() => {
 
       <!-- Quiz Listing & History Dashboard -->
       <div v-else class="space-y-6">
-        <!-- Available Quiz Banner -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <!-- Available quiz for the selected module -->
+        <div class="space-y-4 rounded-xl border border-line bg-surface p-5">
+          <div class="flex flex-col justify-between gap-4 border-b border-line pb-4 sm:flex-row sm:items-center">
             <div>
-              <span class="text-[11px] font-bold text-chemist-primary bg-blue-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                Asesmen Modul Aktif
-              </span>
-              <h3 class="text-base font-bold text-slate-900 mt-1">
-                {{ selectedModule ? selectedModule.title : 'Pilih Modul Pembelajaran' }}
-              </h3>
-              <p class="text-xs text-slate-500">Uji pemahaman konsep, hitungan reaksi, dan keterampilan praktikum kimia kamu.</p>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Asesmen modul</p>
+              <h2 class="mt-1 text-base font-semibold text-ink">
+                {{ selectedModule ? selectedModule.title : 'Pilih modul pembelajaran' }}
+              </h2>
+              <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+                Uji pemahaman konsep, hitungan reaksi, dan keterampilan praktikum kimia.
+              </p>
             </div>
 
-            <div v-if="activeQuiz">
-              <button
-                @click="startTakingQuiz(activeQuiz)"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-chemist-dark hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
-              >
-                <CheckSquare class="w-4 h-4 text-emerald-400" />
-                <span>{{ activeQuiz.title || 'Mulai Kerjakan Kuis' }}</span>
-              </button>
-            </div>
-            <div v-else class="text-xs text-slate-400 italic bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+            <button
+              v-if="activeQuiz"
+              type="button"
+              @click="startTakingQuiz(activeQuiz)"
+              class="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-md bg-ink px-4 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
+            >
+              <CheckSquare class="h-4 w-4 text-accent-300" aria-hidden="true" />
+              {{ activeQuiz.title || 'Mulai kerjakan kuis' }}
+            </button>
+            <p v-else class="shrink-0 rounded-md border border-line bg-paper px-3 py-2 text-xs italic text-ink-muted">
               Belum ada kuis yang diterbitkan untuk modul ini.
-            </div>
+            </p>
           </div>
 
-          <div v-if="activeQuiz" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-              <span class="text-[10px] font-bold text-slate-400 uppercase block">Batas Waktu</span>
-              <span class="font-bold text-slate-800">{{ activeQuiz.time_limit_minutes }} Menit</span>
+          <!-- Only fields the quiz record actually carries -->
+          <div v-if="activeQuiz" class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+            <div class="rounded-md border border-line bg-paper p-3">
+              <span class="block text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Batas waktu</span>
+              <span class="kf-readout mt-0.5 block font-semibold text-ink">
+                {{ activeQuiz.time_limit_minutes ? activeQuiz.time_limit_minutes + ' menit' : 'Tanpa batas' }}
+              </span>
             </div>
-            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-              <span class="text-[10px] font-bold text-slate-400 uppercase block">Passing Grade (KKM)</span>
-              <span class="font-bold text-slate-800">70 / 100</span>
+            <div class="rounded-md border border-line bg-paper p-3">
+              <span class="block text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Penilaian</span>
+              <span class="mt-0.5 block font-semibold text-ink">Radar kompetensi</span>
             </div>
-            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-              <span class="text-[10px] font-bold text-slate-400 uppercase block">Tipe Penilaian</span>
-              <span class="font-bold text-slate-800">Radar Kompetensi</span>
-            </div>
-            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-              <span class="text-[10px] font-bold text-slate-400 uppercase block">Status Kuis</span>
-              <span class="font-bold text-emerald-600">Aktif & Terbuka</span>
+            <div class="rounded-md border border-line bg-paper p-3">
+              <span class="block text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Status</span>
+              <span class="mt-0.5 block font-semibold" :class="activeQuiz.is_active ? 'text-success-700' : 'text-ink-muted'">
+                {{ activeQuiz.is_active ? 'Terbuka' : 'Ditutup' }}
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- Student Quiz History Table -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-          <div class="flex items-center justify-between">
+        <!-- Attempt history -->
+        <div class="overflow-hidden rounded-xl border border-line bg-surface">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3.5">
             <div>
-              <h4 class="text-sm font-bold text-slate-900">Riwayat Pengerjaan Kuis Siswa</h4>
-              <p class="text-xs text-slate-400">Daftar rekam jejak nilai dan radar sains kamu.</p>
+              <h2 class="text-sm font-semibold text-ink">Riwayat pengerjaan</h2>
+              <p class="mt-0.5 text-xs text-ink-muted">Skor dan capaian radar dari kuis yang sudah kamu selesaikan.</p>
             </div>
-            <button 
-              @click="loadStudentAttempts" 
-              class="text-xs text-chemist-primary hover:underline font-semibold"
+            <button
+              type="button"
+              @click="loadStudentAttempts"
+              class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-accent transition-colors hover:bg-accent-50"
             >
+              <RefreshCw class="h-3.5 w-3.5" aria-hidden="true" />
               Segarkan
             </button>
           </div>
 
-          <!-- Attempts list -->
-          <div v-if="loadingQuiz" class="text-center py-8 text-xs text-slate-400">
-            Memuat riwayat kuis...
-          </div>
-          <div v-else-if="quizHistory.length === 0" class="text-center py-8 text-xs text-slate-400">
-            Kamu belum pernah mengerjakan kuis. Klik "Mulai Kerjakan Kuis" di atas.
-          </div>
+          <p v-if="loadingQuiz" class="flex items-center gap-2 px-5 py-8 text-xs text-ink-muted">
+            <RefreshCw class="h-3.5 w-3.5 animate-spin text-accent" aria-hidden="true" />
+            Memuat riwayat kuis
+          </p>
+          <p v-else-if="quizHistory.length === 0" class="px-5 py-8 text-xs leading-relaxed text-ink-muted">
+            Belum ada riwayat. Setelah kamu mengerjakan kuis modul, hasilnya muncul di sini.
+          </p>
           <div v-else class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+            <table class="w-full min-w-[42rem] text-left text-xs">
               <thead>
-                <tr class="border-b border-slate-100 text-slate-400 font-semibold">
-                  <th class="pb-3">Kuis ID</th>
-                  <th class="pb-3">Waktu Mulai</th>
-                  <th class="pb-3">Waktu Selesai</th>
-                  <th class="pb-3">Skor Akhir</th>
-                  <th class="pb-3">Capaian Radar</th>
-                  <th class="pb-3 text-right">Status</th>
+                <tr class="border-b border-line bg-paper text-[11px] font-semibold text-ink-muted">
+                  <th scope="col" class="px-4 py-2.5 font-semibold">Kuis</th>
+                  <th scope="col" class="px-4 py-2.5 font-semibold">Mulai</th>
+                  <th scope="col" class="px-4 py-2.5 font-semibold">Selesai</th>
+                  <th scope="col" class="px-4 py-2.5 font-semibold">Skor</th>
+                  <th scope="col" class="px-4 py-2.5 font-semibold">Capaian radar</th>
+                  <th scope="col" class="px-4 py-2.5 text-right font-semibold">Status</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr v-for="att in quizHistory" :key="att.id" class="text-slate-700">
-                  <td class="py-3 font-mono font-bold text-slate-900">#{{ att.quiz_id }}</td>
-                  <td class="py-3 text-slate-500">{{ new Date(att.started_at).toLocaleString('id-ID') }}</td>
-                  <td class="py-3 text-slate-500">
-                    {{ att.completed_at ? new Date(att.completed_at).toLocaleString('id-ID') : '-' }}
+              <tbody class="divide-y divide-line">
+                <tr v-for="att in quizHistory" :key="att.id" class="text-ink-soft transition-colors hover:bg-paper">
+                  <td class="kf-readout px-4 py-3 font-semibold text-ink">#{{ att.quiz_id }}</td>
+                  <td class="kf-readout px-4 py-3 text-ink-muted">{{ new Date(att.started_at).toLocaleString('id-ID') }}</td>
+                  <td class="kf-readout px-4 py-3 text-ink-muted">
+                    {{ att.completed_at ? new Date(att.completed_at).toLocaleString('id-ID') : 'Belum selesai' }}
                   </td>
-                  <td class="py-3">
-                    <span 
-                      v-if="att.completed_at"
-                      :class="att.total_score >= 70 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-amber-600 bg-amber-50 border-amber-200'"
-                      class="px-2.5 py-0.5 rounded-full border font-bold text-[11px]"
-                    >
+                  <td class="px-4 py-3">
+                    <span v-if="att.completed_at" class="kf-readout rounded-sm bg-sunken px-1.5 py-0.5 text-[11px] font-semibold text-ink">
                       {{ att.total_score }} / 100
                     </span>
-                    <span v-else class="text-slate-400 italic">Sedang berjalan</span>
+                    <span v-else class="text-[11px] italic text-ink-muted">Berjalan</span>
                   </td>
-                  <td class="py-3">
-                    <div v-if="getAttemptMetrics(att).length > 0" class="flex flex-wrap gap-1 max-w-xs">
-                      <span 
-                        v-for="item in getAttemptMetrics(att)" 
+                  <td class="px-4 py-3">
+                    <div v-if="getAttemptMetrics(att).length > 0" class="flex max-w-xs flex-wrap gap-1">
+                      <span
+                        v-for="item in getAttemptMetrics(att)"
                         :key="item.name"
-                        class="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded"
+                        class="rounded-sm bg-accent-50 px-1.5 py-0.5 text-[10px] font-medium text-accent-700"
                       >
-                        {{ item.name }}: {{ item.val }}%
+                        {{ item.name }} {{ item.val }}%
                       </span>
                     </div>
-                    <span v-else class="text-slate-400 text-[10px]">-</span>
+                    <span v-else class="text-[11px] text-ink-faint">Belum ada</span>
                   </td>
-                  <td class="py-3 text-right font-semibold">
-                    <span v-if="att.completed_at" class="text-emerald-600">Selesai</span>
-                    <span v-else class="text-blue-600">Belum Disubmit</span>
+                  <td class="px-4 py-3 text-right text-[11px] font-semibold">
+                    <span v-if="att.completed_at" class="text-success-700">Selesai</span>
+                    <span v-else class="text-ink-muted">Belum dikirim</span>
                   </td>
                 </tr>
               </tbody>

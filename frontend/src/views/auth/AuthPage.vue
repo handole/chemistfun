@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Sparkles, AlertCircle, LogIn, UserPlus } from 'lucide-vue-next'
+import { AlertTriangle, LogIn, UserPlus } from 'lucide-vue-next'
 import { api } from '@/api/client'
 
 const emit = defineEmits(['login-success'])
@@ -14,6 +14,11 @@ const teacherInviteCode = ref('')
 
 const loading = ref(false)
 const error = ref('')
+
+const switchMode = (next) => {
+  mode.value = next
+  error.value = ''
+}
 
 const handleLogin = async () => {
   if (!email.value.trim() || !password.value) {
@@ -65,108 +70,157 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-chemist-bg flex flex-col justify-center items-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-elevated border border-slate-100 space-y-6">
-      <!-- Brand Header -->
-      <div class="text-center space-y-1">
-        <div class="w-12 h-12 rounded-2xl bg-chemist-dark text-white flex items-center justify-center mx-auto shadow-md">
-          <Sparkles class="w-6 h-6 text-sky-400" />
-        </div>
-        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight pt-2">
-          {{ mode === 'login' ? 'Masuk ke KimiFun' : 'Daftar Akun KimiFun' }}
-        </h2>
-        <p class="text-xs text-slate-400">Platform Laboratorium Maya & Pembelajaran Kimia</p>
-      </div>
-
-      <!-- Mode Switcher Tabs -->
-      <div class="flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
-        <button 
-          type="button"
-          @click="mode = 'login'; error = ''"
-          :class="mode === 'login' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'"
-          class="flex-1 py-2 rounded-lg transition-all"
-        >
-          Masuk
-        </button>
-        <button 
-          type="button"
-          @click="mode = 'register'; error = ''"
-          :class="mode === 'register' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'"
-          class="flex-1 py-2 rounded-lg transition-all"
-        >
-          Daftar Akun
-        </button>
-      </div>
-
-      <!-- Error Alert -->
-      <div v-if="error" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium flex items-center gap-2">
-        <AlertCircle class="w-4 h-4 shrink-0" />
-        <span>{{ error }}</span>
-      </div>
-
-      <!-- Form -->
-      <form @submit.prevent="mode === 'login' ? handleLogin() : handleRegister()" class="space-y-3.5 text-xs">
-        <div v-if="mode === 'register'">
-          <label class="block font-bold text-slate-700 mb-1">Nama Lengkap</label>
-          <input 
-            v-model="fullName"
-            type="text" 
-            placeholder="Nama lengkap"
-            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
-          />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Email</label>
-          <input 
-            v-model="email"
-            type="email" 
-            placeholder="alamat@email.com"
-            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
-          />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Password</label>
-          <input 
-            v-model="password"
-            type="password" 
-            placeholder="••••••••"
-            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
-          />
-        </div>
-
-        <div v-if="mode === 'register'">
-          <label class="block font-bold text-slate-700 mb-1">Daftar Sebagai</label>
-          <select 
-            v-model="role"
-            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
+  <div class="flex min-h-screen flex-col items-center justify-center bg-paper px-4 py-10">
+    <div class="w-full max-w-sm">
+      <!-- Brand -->
+      <div class="mb-6 flex items-center gap-3">
+        <span class="grid h-11 w-11 place-items-center rounded-lg bg-ink">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-accent-300"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
           >
-            <option value="student">Siswa</option>
-            <option value="teacher">Guru</option>
-          </select>
+            <path d="M6 3h12" />
+            <path d="M8 3v13a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V3" />
+            <path d="M8 13h8" />
+          </svg>
+        </span>
+        <div class="leading-tight">
+          <p class="text-base font-semibold tracking-tight text-ink">KimiFun</p>
+          <p class="text-xs text-ink-muted">Lab kimia virtual untuk kelas</p>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-line bg-surface p-5 shadow-card sm:p-6">
+        <h1 class="text-lg font-semibold tracking-tight text-ink">
+          {{ mode === 'login' ? 'Masuk ke akun' : 'Buat akun baru' }}
+        </h1>
+        <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+          {{
+            mode === 'login'
+              ? 'Gunakan email dan password yang diberikan sekolah.'
+              : 'Akun guru memerlukan kode undangan dari sekolah.'
+          }}
+        </p>
+
+        <!-- Mode switch -->
+        <div class="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-sunken p-1" role="tablist" aria-label="Pilih mode akun">
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="mode === 'login'"
+            @click="switchMode('login')"
+            class="min-h-[40px] rounded-md px-3 text-xs font-semibold transition-colors"
+            :class="mode === 'login' ? 'bg-surface text-ink shadow-2xs' : 'text-ink-muted hover:text-ink'"
+          >
+            Masuk
+          </button>
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="mode === 'register'"
+            @click="switchMode('register')"
+            class="min-h-[40px] rounded-md px-3 text-xs font-semibold transition-colors"
+            :class="mode === 'register' ? 'bg-surface text-ink shadow-2xs' : 'text-ink-muted hover:text-ink'"
+          >
+            Daftar
+          </button>
         </div>
 
-        <div v-if="mode === 'register' && role === 'teacher'">
-          <label class="block font-bold text-slate-700 mb-1">Kode Undangan Guru</label>
-          <input 
-            v-model="teacherInviteCode"
-            type="text" 
-            placeholder="Masukkan kode undangan dari sekolah"
-            class="w-full bg-slate-50 focus:bg-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none"
-          />
-        </div>
-
-        <button 
-          type="submit"
-          :disabled="loading"
-          class="w-full py-3 bg-chemist-dark hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+        <!-- Error -->
+        <p
+          v-if="error"
+          role="alert"
+          class="mt-4 flex items-start gap-2 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-xs font-medium leading-relaxed text-danger-700"
         >
-          <LogIn v-if="mode === 'login'" class="w-4 h-4 text-sky-400" />
-          <UserPlus v-else class="w-4 h-4 text-emerald-400" />
-          <span>{{ loading ? 'Memproses...' : (mode === 'login' ? 'Masuk ke Akun' : 'Daftar Sekarang') }}</span>
-        </button>
-      </form>
+          <AlertTriangle class="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {{ error }}
+        </p>
+
+        <form
+          class="mt-4 space-y-3"
+          @submit.prevent="mode === 'login' ? handleLogin() : handleRegister()"
+        >
+          <div v-if="mode === 'register'">
+            <label for="auth-name" class="mb-1 block text-xs font-semibold text-ink-soft">Nama lengkap</label>
+            <input
+              id="auth-name"
+              v-model="fullName"
+              type="text"
+              autocomplete="name"
+              placeholder="Nama sesuai daftar kelas"
+              class="w-full rounded-md border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-surface"
+            />
+          </div>
+
+          <div>
+            <label for="auth-email" class="mb-1 block text-xs font-semibold text-ink-soft">Email</label>
+            <input
+              id="auth-email"
+              v-model="email"
+              type="email"
+              autocomplete="email"
+              inputmode="email"
+              placeholder="nama@sekolah.sch.id"
+              class="w-full rounded-md border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-surface"
+            />
+          </div>
+
+          <div>
+            <label for="auth-password" class="mb-1 block text-xs font-semibold text-ink-soft">Password</label>
+            <input
+              id="auth-password"
+              v-model="password"
+              type="password"
+              :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+              placeholder="Minimal 8 karakter"
+              class="w-full rounded-md border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-surface"
+            />
+          </div>
+
+          <div v-if="mode === 'register'">
+            <label for="auth-role" class="mb-1 block text-xs font-semibold text-ink-soft">Daftar sebagai</label>
+            <select
+              id="auth-role"
+              v-model="role"
+              class="w-full rounded-md border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent focus:bg-surface"
+            >
+              <option value="student">Siswa</option>
+              <option value="teacher">Guru</option>
+            </select>
+          </div>
+
+          <div v-if="mode === 'register' && role === 'teacher'">
+            <label for="auth-invite" class="mb-1 block text-xs font-semibold text-ink-soft">Kode undangan guru</label>
+            <input
+              id="auth-invite"
+              v-model="teacherInviteCode"
+              type="text"
+              placeholder="Kode dari sekolah"
+              class="w-full rounded-md border border-line bg-paper px-3 py-2.5 font-mono text-sm text-ink outline-none transition-colors placeholder:font-sans placeholder:text-ink-faint focus:border-accent focus:bg-surface"
+            />
+          </div>
+
+          <button
+            type="submit"
+            :disabled="loading"
+            class="mt-1 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-soft disabled:opacity-60"
+          >
+            <component :is="mode === 'login' ? LogIn : UserPlus" class="h-4 w-4 text-accent-300" aria-hidden="true" />
+            {{ loading ? 'Memproses' : mode === 'login' ? 'Masuk' : 'Buat akun' }}
+          </button>
+        </form>
+      </div>
+
+      <p class="mt-4 text-center text-[11px] leading-relaxed text-ink-faint">
+        Lupa password atau kode undangan? Hubungi guru atau admin sekolah.
+      </p>
     </div>
   </div>
 </template>
