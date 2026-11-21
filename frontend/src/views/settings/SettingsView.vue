@@ -1,6 +1,5 @@
 <script setup>
-import { ref } from 'vue'
-import { User, Server, Shield, CheckCircle2, RotateCcw } from 'lucide-vue-next'
+import { UserRound, Server, CheckCircle2, AlertTriangle, RotateCcw, LogOut } from 'lucide-vue-next'
 
 const props = defineProps({
   user: Object,
@@ -8,79 +7,106 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['logout', 'refresh'])
+
+const roleLabel = (role) => {
+  if (role === 'teacher') return 'Guru'
+  if (role === 'student') return 'Siswa'
+  return 'Belum ditentukan'
+}
 </script>
 
 <template>
-  <div class="space-y-6 max-w-3xl">
-    <div>
-      <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Pengaturan Akun & Sistem</h2>
-      <p class="text-xs text-slate-500 font-medium mt-1">Konfigurasi profil guru, status server backend FastAPI, dan kredensial akses.</p>
-    </div>
+  <div class="max-w-3xl space-y-4">
+    <header>
+      <h1 class="text-xl font-semibold tracking-tight text-ink">Pengaturan</h1>
+      <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+        Data akun yang dipakai untuk masuk, dan status koneksi ke server KimiFun.
+      </p>
+    </header>
 
-    <!-- Profil Card -->
-    <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-card space-y-4">
-      <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
-        <User class="w-5 h-5 text-chemist-primary" />
-        <h3 class="font-bold text-slate-900 text-sm">Informasi Akun Anda</h3>
+    <!-- Account -->
+    <section class="rounded-xl border border-line bg-surface">
+      <div class="flex items-center gap-2.5 border-b border-line px-5 py-3.5">
+        <UserRound class="h-4 w-4 text-ink-faint" aria-hidden="true" />
+        <h2 class="text-sm font-semibold text-ink">Akun</h2>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-          <span class="text-slate-400 font-medium">Nama Lengkap:</span>
-          <p class="font-bold text-slate-900 text-sm mt-0.5">{{ user?.full_name || 'Guru Kimia' }}</p>
+      <dl class="grid grid-cols-1 gap-px bg-line sm:grid-cols-2">
+        <div class="bg-surface px-5 py-3.5">
+          <dt class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Nama lengkap</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ user?.full_name || 'Belum tersedia' }}</dd>
         </div>
 
-        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-          <span class="text-slate-400 font-medium">Alamat Email:</span>
-          <p class="font-bold text-slate-900 text-sm mt-0.5">{{ user?.email || 'guru@KimiFun.com' }}</p>
+        <div class="bg-surface px-5 py-3.5">
+          <dt class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Email</dt>
+          <dd class="mt-1 truncate text-sm font-semibold text-ink">{{ user?.email || 'Belum tersedia' }}</dd>
         </div>
 
-        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-          <span class="text-slate-400 font-medium">Hak Akses (Role):</span>
-          <p class="font-bold text-chemist-primary text-sm mt-0.5 capitalize">{{ user?.role || 'teacher' }} (Pendidik)</p>
+        <div class="bg-surface px-5 py-3.5">
+          <dt class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">Peran</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ roleLabel(user?.role) }}</dd>
         </div>
 
-        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-          <span class="text-slate-400 font-medium">Public UUID:</span>
-          <p class="font-mono text-[11px] text-slate-600 mt-0.5 truncate">{{ user?.uuid || 'Local Session' }}</p>
+        <div class="bg-surface px-5 py-3.5">
+          <dt class="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">ID akun</dt>
+          <dd class="kf-readout mt-1 truncate text-xs text-ink-soft">{{ user?.uuid || 'Belum tersedia' }}</dd>
         </div>
-      </div>
-    </div>
+      </dl>
 
-    <!-- Backend Status Card -->
-    <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-card space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-3">
-          <Server class="w-5 h-5 text-emerald-600" />
-          <h3 class="font-bold text-slate-900 text-sm">Status Endpoint API Backend</h3>
-        </div>
-        <button 
-          @click="emit('refresh')"
-          class="text-xs font-bold text-chemist-primary hover:underline flex items-center gap-1"
+      <div class="border-t border-line px-5 py-3.5">
+        <button
+          type="button"
+          @click="emit('logout')"
+          class="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-line px-3 text-xs font-semibold text-danger-700 transition-colors hover:bg-danger-50"
         >
-          <RotateCcw class="w-3 h-3" />
-          <span>Cek Ulang</span>
+          <LogOut class="h-3.5 w-3.5" aria-hidden="true" />
+          Keluar dari akun
+        </button>
+      </div>
+    </section>
+
+    <!-- Backend -->
+    <section class="rounded-xl border border-line bg-surface">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3.5">
+        <div class="flex items-center gap-2.5">
+          <Server class="h-4 w-4 text-ink-faint" aria-hidden="true" />
+          <h2 class="text-sm font-semibold text-ink">Koneksi server</h2>
+        </div>
+        <button
+          type="button"
+          @click="emit('refresh')"
+          class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-accent transition-colors hover:bg-accent-50"
+        >
+          <RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
+          Periksa ulang
         </button>
       </div>
 
-      <div class="p-4 rounded-2xl flex items-center justify-between" :class="backendOnline ? 'bg-emerald-50/70 border border-emerald-200' : 'bg-rose-50 border border-rose-200'">
-        <div class="flex items-center gap-3">
-          <span class="w-3 h-3 rounded-full" :class="backendOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
+      <div class="px-5 py-4">
+        <div
+          class="flex items-start gap-2.5 rounded-lg border px-3.5 py-3"
+          :class="backendOnline ? 'border-success-200 bg-success-50' : 'border-danger-200 bg-danger-50'"
+          role="status"
+        >
+          <component
+            :is="backendOnline ? CheckCircle2 : AlertTriangle"
+            class="mt-0.5 h-4 w-4 shrink-0"
+            :class="backendOnline ? 'text-success-700' : 'text-danger-700'"
+            aria-hidden="true"
+          />
           <div>
-            <p class="text-xs font-bold" :class="backendOnline ? 'text-emerald-900' : 'text-rose-900'">
-              {{ backendOnline ? 'Layanan FastAPI & PostgreSQL Terhubung Normal' : 'Koneksi API Backend Terputus' }}
+            <p class="text-xs font-semibold" :class="backendOnline ? 'text-success-700' : 'text-danger-700'">
+              {{ backendOnline ? 'Server merespons' : 'Server tidak merespons' }}
             </p>
-            <p class="text-[11px]" :class="backendOnline ? 'text-emerald-700' : 'text-rose-700'">
-              URL: http://localhost:8000 (Docker network KimiFun_network)
+            <p class="mt-0.5 text-[11px] leading-relaxed text-ink-muted">
+              {{ backendOnline
+                ? 'Permintaan data kelas, modul, dan asesmen dapat dilayani.'
+                : 'Data mungkin gagal dimuat. Periksa koneksi, lalu periksa ulang status.' }}
             </p>
+            <p class="kf-readout mt-1.5 text-[11px] text-ink-faint">Endpoint: /api (relatif terhadap host ini)</p>
           </div>
         </div>
-
-        <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-md" :class="backendOnline ? 'bg-emerald-200/60 text-emerald-800' : 'bg-rose-200 text-rose-800'">
-          {{ backendOnline ? 'HTTP 200' : 'OFFLINE' }}
-        </span>
       </div>
-    </div>
+    </section>
   </div>
 </template>
-

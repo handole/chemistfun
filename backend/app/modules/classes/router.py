@@ -34,7 +34,10 @@ router = APIRouter(prefix="/classes", tags=["Classes"])
 )
 async def list_classes(
     teacher_id: Optional[int] = Query(default=None, description="Filter by teacher user ID"),
-    my_classes: bool = Query(default=False, description="If true, return classes enrolled by current student"),
+    my_classes: bool = Query(
+        default=False,
+        description="Student: classes enrolled by caller. Teacher: classes owned by caller.",
+    ),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     current_user: User = Depends(get_current_user),
@@ -43,6 +46,10 @@ async def list_classes(
     """List classes. Teachers browse own classes, students can see their enrolled classes or all."""
     if my_classes and current_user.role == UserRole.STUDENT:
         return await ClassController.get_student_classes(db, student_id=current_user.id)
+    if my_classes and current_user.role == UserRole.TEACHER:
+        return await ClassController.get_multi(
+            db, teacher_id=current_user.id, skip=skip, limit=limit
+        )
     return await ClassController.get_multi(db, teacher_id=teacher_id, skip=skip, limit=limit)
 
 

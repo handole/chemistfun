@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { CheckCircle2, AlertCircle, RefreshCw, Send, Check } from 'lucide-vue-next'
+import { CheckCircle2, AlertCircle, RefreshCw, Send, Check, FlaskConical } from 'lucide-vue-next'
 import { api } from '@/api/client'
 
 const props = defineProps({
@@ -298,18 +298,21 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-5">
-    <!-- Navigation Tabs -->
-    <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+    <!-- Stage tabs: current step marked by rule and weight -->
+    <div class="flex items-center gap-1 overflow-x-auto border-b border-line pb-0 no-scrollbar" role="tablist" aria-label="Tahap praktikum">
       <button
         v-for="s in stages"
         :key="s.id"
+        type="button"
+        role="tab"
+        :aria-selected="currentStage === s.id"
         @click="selectStage(s.id)"
-        :class="[
-          'px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap',
+        class="-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-xs transition-colors"
+        :class="
           currentStage === s.id
-            ? 'bg-chemist-dark text-white shadow-sm'
-            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-        ]"
+            ? 'border-accent font-semibold text-ink'
+            : 'border-transparent font-medium text-ink-muted hover:text-ink'
+        "
       >
         {{ s.title }}
       </button>
@@ -323,7 +326,7 @@ onUnmounted(() => {
         <div>
           <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
             <span class="text-xs font-bold text-slate-900">1. Jendela Makroskopik</span>
-            <span class="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">Fenomena</span>
+            <span class="text-[11px] font-medium text-ink-muted bg-sunken px-2 py-0.5 rounded-sm">Fenomena</span>
           </div>
 
           <div class="h-48 bg-slate-50 rounded-xl border border-slate-100 flex flex-col items-center justify-center p-4 relative">
@@ -351,8 +354,8 @@ onUnmounted(() => {
 
             <!-- Stage 3 Macro -->
             <div v-else-if="currentStage === 3" class="text-center space-y-2">
-              <div class="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto text-blue-600 text-lg">
-                ⚗️
+              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-line bg-accent-50">
+                <FlaskConical class="h-5 w-5 text-accent" aria-hidden="true" />
               </div>
               <p class="text-xs font-semibold text-slate-800">Sintesis Gas Amonia</p>
               <p class="text-[11px] text-slate-500 font-mono">N₂ + 3H₂ ⇌ 2NH₃</p>
