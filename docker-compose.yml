@@ -41,10 +41,10 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-9router}
       TEACHER_INVITE_CODE: ${TEACHER_INVITE_CODE:-}
       NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY:-}
-      NINE_ROUTER_BASE_URL: ${NINE_ROUTER_BASE_URL:-https://api.9router.com/v1}
-      NINE_ROUTER_MODEL: ${NINE_ROUTER_MODEL:-ag/gemini-1.5-flash}
+      NINE_ROUTER_BASE_URL: ${NINE_ROUTER_BASE_URL:-http://100.119.135.29:8080/v1}
+      NINE_ROUTER_MODEL: ${NINE_ROUTER_MODEL:-ag/gemini-3.8-flash-medium}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
     ports:
       # Bind to 127.0.0.1; frontend proxies /api to http://backend:8000 via internal Docker network
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"

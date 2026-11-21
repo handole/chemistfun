@@ -27,7 +27,12 @@ class AIGenerator:
         return text
 
     @classmethod
-    async def _call_gemini(cls, system_instruction: str, user_prompt: str) -> str:
+    async def _call_gemini(
+        cls,
+        system_instruction: str,
+        user_prompt: str,
+        response_mime_type: Optional[str] = None,
+    ) -> str:
         """Panggilan async ke REST API Google Gemini."""
         if not GEMINI_API_KEY:
             raise ValueError(
@@ -42,6 +47,12 @@ class AIGenerator:
             f"{clean_model}:generateContent?key={GEMINI_API_KEY}"
         )
 
+        gen_config: Dict[str, Any] = {
+            "temperature": 0.4,
+        }
+        if response_mime_type:
+            gen_config["responseMimeType"] = response_mime_type
+
         payload = {
             "contents": [
                 {
@@ -49,10 +60,7 @@ class AIGenerator:
                     "parts": [{"text": f"{system_instruction}\n\n{user_prompt}"}],
                 }
             ],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "temperature": 0.4,
-            },
+            "generationConfig": gen_config,
         }
 
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -108,7 +116,9 @@ class AIGenerator:
         if provider == "9router" or provider == "openai":
             raw_text = await cls._call_9router(system_instruction, user_prompt)
         else:
-            raw_text = await cls._call_gemini(system_instruction, user_prompt)
+            raw_text = await cls._call_gemini(
+                system_instruction, user_prompt, response_mime_type="application/json"
+            )
 
         cleaned = cls._clean_json_text(raw_text)
         try:
@@ -152,14 +162,35 @@ class AIGenerator:
 
     @classmethod
     async def ask_chembot(cls, question: str) -> str:
-        """Menjawab pertanyaan siswa melalui Kimi AI Tutor."""
+        """Menjawab pertanyaan siswa melalui Kimi AI Tutor dengan fallback otomatis."""
         prompt_data = PromptEngine.build_tutor_prompt(question)
         provider = AI_PROVIDER.lower()
+
         if provider == "9router" or provider == "openai":
-            return await cls._call_9router(
-                prompt_data["system_instruction"], prompt_data["user_prompt"]
-            )
+            try:
+                return await cls._call_9router(
+                    prompt_data["system_instruction"], prompt_data["user_prompt"]
+                )
+            except Exception as e_9router:
+                if GEMINI_API_KEY:
+                    try:
+                        return await cls._call_gemini(
+                            prompt_data["system_instruction"], prompt_data["user_prompt"]
+                        )
+                    except Exception:
+                        pass
+                raise e_9router
         else:
-            return await cls._call_gemini(
-                prompt_data["system_instruction"], prompt_data["user_prompt"]
-            )
+            try:
+                return await cls._call_gemini(
+                    prompt_data["system_instruction"], prompt_data["user_prompt"]
+                )
+            except Exception as e_gemini:
+                if NINE_ROUTER_API_KEY:
+                    try:
+                        return await cls._call_9router(
+                            prompt_data["system_instruction"], prompt_data["user_prompt"]
+                        )
+                    except Exception:
+                        pass
+                raise e_gemini
