@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { FlaskConical, Sparkles, Check, Play, Save, RefreshCw, AlertCircle, Layers } from 'lucide-vue-next'
+import { FlaskConical, Check, Play, Save, RefreshCw, AlertCircle, Layers } from 'lucide-vue-next'
 import { api } from '@/api/client'
 import StoichiometryLab from '@/views/virtual-lab/StoichiometryLab.vue'
 
@@ -90,7 +90,7 @@ const loadClassesAndMaterials = async () => {
 
     // 2. Fetch classes if any
     try {
-      const cls = await api.classes.list()
+      const cls = await api.classes.list(null, true)
       classes.value = cls || []
       for (const c of classes.value) {
         try {
@@ -234,53 +234,53 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <header class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
-        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Konfigurasi Lab Virtual & Simulasi</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1">Atur parameter reaksi kimia interaktif yang akan dijalankan oleh siswa di laboratorium maya.</p>
+        <h1 class="text-xl font-semibold tracking-tight text-ink">Lab virtual</h1>
+        <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
+          Atur parameter reaksi yang akan dijalankan siswa di laboratorium maya. Setiap lab terikat pada satu materi.
+        </p>
       </div>
 
-      <!-- Selector Material -->
       <div class="flex items-center gap-2 self-start sm:self-auto">
-        <label class="text-xs font-bold text-slate-500 whitespace-nowrap">Materi Terpilih:</label>
-        <select 
+        <label for="lab-material-select" class="whitespace-nowrap text-xs font-semibold text-ink-soft">Materi</label>
+        <select
           v-if="materialsList.length > 0"
+          id="lab-material-select"
           :value="selectedMaterial?.uuid"
           @change="(e) => selectMaterial(materialsList.find(m => m.uuid === e.target.value))"
-          class="bg-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 focus:border-chemist-primary outline-none shadow-2xs max-w-xs truncate"
+          class="max-w-xs truncate rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink outline-none transition-colors focus:border-accent"
         >
           <option v-for="m in materialsList" :key="m.uuid" :value="m.uuid">{{ m.title }}</option>
         </select>
-        <span v-else class="text-xs text-slate-400 italic">Belum ada materi dibuat</span>
+        <span v-else class="text-xs italic text-ink-faint">Belum ada materi</span>
       </div>
-    </div>
+    </header>
 
-    <!-- Lab Engine Selector Tabs -->
-    <div class="flex items-center gap-2 border-b border-slate-200 pb-3">
+    <!-- Engine selector: two labs, one live at a time -->
+    <div class="flex flex-wrap items-center gap-1 border-b border-line" role="tablist" aria-label="Jenis lab virtual">
       <button
+        type="button"
+        role="tab"
+        :aria-selected="activeLabTab === 'stoichiometry'"
         @click="activeLabTab = 'stoichiometry'"
-        :class="[
-          'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2',
-          activeLabTab === 'stoichiometry'
-            ? 'bg-slate-900 text-white shadow-md'
-            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-        ]"
+        class="-mb-px flex min-h-[44px] items-center gap-2 border-b-2 px-3 text-xs transition-colors"
+        :class="activeLabTab === 'stoichiometry' ? 'border-accent font-semibold text-ink' : 'border-transparent font-medium text-ink-muted hover:text-ink'"
       >
-        <Layers class="w-4 h-4 text-sky-400" />
-        <span>Stoikiometri Multi-Representasi (E-LKPD Inquiry)</span>
+        <Layers class="h-4 w-4" :class="activeLabTab === 'stoichiometry' ? 'text-accent' : 'text-ink-faint'" aria-hidden="true" />
+        Stoikiometri (e-LKPD)
       </button>
 
       <button
+        type="button"
+        role="tab"
+        :aria-selected="activeLabTab === 'titration'"
         @click="activeLabTab = 'titration'"
-        :class="[
-          'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2',
-          activeLabTab === 'titration'
-            ? 'bg-slate-900 text-white shadow-md'
-            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-        ]"
+        class="-mb-px flex min-h-[44px] items-center gap-2 border-b-2 px-3 text-xs transition-colors"
+        :class="activeLabTab === 'titration' ? 'border-accent font-semibold text-ink' : 'border-transparent font-medium text-ink-muted hover:text-ink'"
       >
-        <FlaskConical class="w-4 h-4 text-pink-400" />
-        <span>Simulator Titrasi Asam-Basa (Buret & Erlenmeyer)</span>
+        <FlaskConical class="h-4 w-4" :class="activeLabTab === 'titration' ? 'text-accent' : 'text-ink-faint'" aria-hidden="true" />
+        Titrasi asam-basa
       </button>
     </div>
 
@@ -292,11 +292,11 @@ onMounted(() => {
     <!-- Active View 2: Titration Lab Config -->
     <div v-else-if="activeLabTab === 'titration'">
       <!-- Empty State if no materials -->
-      <div v-if="materialsList.length === 0" class="bg-white p-12 rounded-3xl border border-slate-100 text-center space-y-3">
-        <FlaskConical class="w-12 h-12 text-slate-300 mx-auto" />
-        <h3 class="font-bold text-slate-800 text-base">Belum Ada Materi Pembelajaran</h3>
-        <p class="text-xs text-slate-400 max-w-md mx-auto">
-          Simulasi Lab Virtual melekat secara 1-ke-1 dengan materi teori kimia. Silakan buat materi pada menu "Modul Belajar" terlebih dahulu.
+      <div v-if="materialsList.length === 0" class="space-y-3 rounded-xl border border-line bg-surface p-10 text-center">
+        <FlaskConical class="mx-auto h-10 w-10 text-ink-faint" aria-hidden="true" />
+        <h2 class="text-sm font-semibold text-ink">Belum ada materi</h2>
+        <p class="mx-auto max-w-md text-xs leading-relaxed text-ink-muted">
+          Lab virtual menempel pada satu materi. Buat materi di menu Modul belajar dulu, lalu kembali ke sini.
         </p>
       </div>
 
@@ -313,20 +313,20 @@ onMounted(() => {
           <!-- Status Draft/Ready pill -->
           <select 
             v-model="labStatus"
-            class="text-xs font-bold px-2.5 py-1 rounded-full border outline-none cursor-pointer"
-            :class="labStatus === 'ready' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+            :aria-label="'Status lab untuk ' + (selectedMaterial?.title || 'materi ini')"
+            class="rounded-md border px-2.5 py-1 text-xs font-semibold outline-none transition-colors"
+            :class="labStatus === 'ready' ? 'border-success-200 bg-success-50 text-success-700' : 'border-warning-200 bg-warning-50 text-warning-700'"
           >
-            <option value="ready">🟢 Ready (Siap Pakai)</option>
-            <option value="draft">🟡 Draft (Penyusunan)</option>
+            <option value="ready">Siap dipakai siswa</option>
+            <option value="draft">Masih draf</option>
           </select>
         </div>
 
         <!-- AI Generator Assistant Box -->
         <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Sparkles class="w-3.5 h-3.5 text-chemist-primary" />
-              <span>Generate Parameter Simulasi</span>
+            <span class="flex items-center gap-1.5 text-xs font-semibold text-ink">
+              Parameter simulasi otomatis
             </span>
           </div>
           <div class="flex gap-2">
@@ -342,9 +342,8 @@ onMounted(() => {
               :disabled="isGeneratingAI || !aiPromptInput.trim()"
               class="bg-chemist-dark hover:bg-slate-900 disabled:opacity-50 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs shrink-0"
             >
-              <RefreshCw v-if="isGeneratingAI" class="w-3.5 h-3.5 animate-spin" />
-              <Sparkles v-else class="w-3.5 h-3.5 text-sky-400" />
-              <span>{{ isGeneratingAI ? 'Memproses...' : 'Generate' }}</span>
+              <RefreshCw v-if="isGeneratingAI" class="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              <span>{{ isGeneratingAI ? 'Memproses' : 'Generate' }}</span>
             </button>
           </div>
           <p v-if="aiSuccessMsg" class="text-[11px] text-emerald-600 font-semibold">{{ aiSuccessMsg }}</p>
@@ -468,9 +467,7 @@ onMounted(() => {
         <!-- Beaker & Titration Canvas -->
         <div class="h-64 bg-slate-50 rounded-2xl border border-slate-100 relative flex items-center justify-center overflow-hidden">
           <!-- Buret tip above -->
-          <div class="absolute top-2 w-3 h-16 bg-slate-300 rounded-b flex flex-col justify-end items-center">
-            <span v-if="isSimulating" class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping mb-1"></span>
-          </div>
+          <div class="absolute left-1/2 top-2 h-16 w-3 -translate-x-1/2 rounded-b-sm bg-slate-300" aria-hidden="true"></div>
 
           <!-- Erlenmeyer Flask Simulation -->
           <div class="w-36 h-44 relative flex flex-col items-center justify-end">

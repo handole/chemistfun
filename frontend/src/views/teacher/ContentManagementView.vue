@@ -11,7 +11,6 @@ import {
   Edit3, 
   FlaskConical, 
   AlertCircle,
-  Sparkles,
   RefreshCw,
   Smartphone,
   Monitor,
@@ -270,38 +269,42 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Header with Grade Level Selector -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Header with grade level selector -->
+    <header class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
       <div>
-        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Kurikulum & Modul Pembelajaran</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1">Susun materi kimia per tingkatan level (X, XI, XII) yang otomatis dibagikan ke seluruh sub-kelas terkait.</p>
+        <h1 class="text-xl font-semibold tracking-tight text-ink">Modul belajar</h1>
+        <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
+          Materi disusun per tingkat kelas, lalu otomatis tersedia untuk semua kelas dengan tingkat yang sama.
+        </p>
       </div>
 
-      <!-- Grade Level Switcher Pills -->
-      <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start sm:self-auto shadow-2xs">
-        <span class="text-[11px] font-bold text-slate-500 px-2 uppercase">Level:</span>
+      <div class="flex items-center gap-1 self-start rounded-md border border-line bg-paper p-1 sm:self-auto" role="tablist" aria-label="Pilih tingkat kelas">
+        <span class="px-1.5 text-[11px] font-semibold text-ink-faint">Tingkat</span>
         <button
           v-for="lvl in gradeLevels"
           :key="lvl"
+          type="button"
+          role="tab"
+          :aria-selected="selectedGradeLevel === lvl"
           @click="selectedGradeLevel = lvl"
           :class="[
-            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all',
+            'min-h-[32px] rounded-sm px-2.5 text-xs transition-colors',
             selectedGradeLevel === lvl
-              ? 'bg-chemist-dark text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              ? 'bg-surface font-semibold text-ink shadow-2xs'
+              : 'font-medium text-ink-muted hover:text-ink'
           ]"
         >
           Kelas {{ lvl }}
         </button>
       </div>
-    </div>
+    </header>
 
     <!-- Main Content Layout (Split Module & Materials) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- Left: Modules Column (4 Cols) -->
       <div class="lg:col-span-4 space-y-3">
         <div class="flex items-center justify-between px-1">
-          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Topik / Modul ({{ modules.length }})</h4>
+          <h4 class="text-xs font-semibold text-ink-muted">Topik / modul ({{ modules.length }})</h4>
           <button 
             @click="showModuleModal = true"
             class="text-xs font-bold text-chemist-primary hover:underline flex items-center gap-1"
@@ -394,14 +397,27 @@ onMounted(() => {
           </div>
 
           <!-- Materials List -->
-          <div v-if="loadingMaterials" class="text-center py-10 text-slate-400 text-xs">
-            Memuat materi pembelajaran...
+          <div v-if="loadingMaterials" class="py-10 text-center text-xs text-ink-muted">
+            Memuat materi pembelajaran
           </div>
 
-          <div v-else-if="materials.length === 0" class="text-center py-12 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 space-y-2">
-            <FileText class="w-8 h-8 text-slate-300 mx-auto" />
-            <p class="text-xs font-bold text-slate-700">Belum ada materi di modul ini</p>
-            <p class="text-xs text-slate-400">Tambahkan materi teori atau hubungkan ke simulasi Lab Virtual.</p>
+          <div
+            v-else-if="materials.length === 0"
+            class="flex flex-col items-start gap-2 rounded-lg border border-dashed border-line-strong bg-paper px-4 py-6"
+          >
+            <FileText class="h-5 w-5 text-ink-faint" aria-hidden="true" />
+            <p class="text-sm font-semibold text-ink">Modul ini belum punya materi</p>
+            <p class="max-w-md text-xs leading-relaxed text-ink-muted">
+              Tambahkan materi teori, atau hubungkan ke simulasi Lab Virtual supaya siswa bisa praktikum.
+            </p>
+            <button
+              type="button"
+              @click="openCreateMaterial"
+              class="mt-1 inline-flex min-h-[40px] items-center gap-1.5 rounded-md bg-ink px-3 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
+            >
+              <Plus class="h-3.5 w-3.5 text-accent-300" aria-hidden="true" />
+              Tambah materi
+            </button>
           </div>
 
           <div v-else class="space-y-3">
@@ -539,9 +555,8 @@ onMounted(() => {
         <!-- AI Generator Assistant for Material Content -->
         <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Sparkles class="w-3.5 h-3.5 text-chemist-primary" />
-              <span>Generate Draf Materi</span>
+            <span class="flex items-center gap-1.5 text-xs font-semibold text-ink">
+              Draf materi otomatis
             </span>
           </div>
           <div class="flex gap-2">
@@ -557,9 +572,8 @@ onMounted(() => {
               :disabled="isGeneratingMaterialAI || !aiMaterialTopic.trim()"
               class="bg-chemist-dark hover:bg-slate-900 disabled:opacity-50 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs shrink-0"
             >
-              <RefreshCw v-if="isGeneratingMaterialAI" class="w-3.5 h-3.5 animate-spin" />
-              <Sparkles v-else class="w-3.5 h-3.5 text-sky-400" />
-              <span>{{ isGeneratingMaterialAI ? 'Memproses...' : 'Generate' }}</span>
+              <RefreshCw v-if="isGeneratingMaterialAI" class="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              <span>{{ isGeneratingMaterialAI ? 'Memproses' : 'Generate' }}</span>
             </button>
           </div>
           <p v-if="aiMaterialError" class="text-[11px] text-rose-600 font-semibold">{{ aiMaterialError }}</p>

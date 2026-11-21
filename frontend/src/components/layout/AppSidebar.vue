@@ -1,13 +1,14 @@
 <script setup>
-import { 
-  LayoutGrid, 
-  Users, 
-  BookOpen, 
-  FlaskConical, 
-  CheckSquare, 
-  BarChart3, 
+import { computed } from 'vue'
+import {
+  LayoutGrid,
+  Users,
+  BookOpen,
+  FlaskConical,
+  ClipboardCheck,
+  CheckSquare,
   Settings,
-  ClipboardCheck
+  LogOut,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -25,85 +26,115 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:currentTab'])
+const emit = defineEmits(['update:currentTab', 'logout'])
 
-const teacherMenus = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { id: 'classes', label: 'Kelas Saya', icon: Users },
-  { id: 'content', label: 'Modul Belajar', icon: BookOpen },
-  { id: 'journals', label: 'Jurnal Mengajar', icon: ClipboardCheck },
-  { id: 'labs', label: 'Lab Virtual', icon: FlaskConical },
-  { id: 'assessment', label: 'Kuis & Asesmen', icon: CheckSquare },
-  { id: 'analytics', label: 'Analisis Siswa', icon: BarChart3 },
+// Grouped by the job the teacher or student is doing, not by screen name.
+const teacherGroups = [
+  {
+    label: 'Mengajar',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
+      { id: 'classes', label: 'Kelas', icon: Users },
+      { id: 'content', label: 'Modul belajar', icon: BookOpen },
+      { id: 'journals', label: 'Jurnal mengajar', icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: 'Laboratorium',
+    items: [
+      { id: 'labs', label: 'Lab virtual', icon: FlaskConical },
+      { id: 'assessment', label: 'Kuis & asesmen', icon: CheckSquare },
+    ],
+  },
 ]
 
-const studentMenus = [
-  { id: 'dashboard', label: 'Portal Belajar', icon: LayoutGrid },
-  { id: 'labs', label: 'Praktikum Virtual', icon: FlaskConical },
+const studentGroups = [
+  {
+    label: 'Belajar',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
+      { id: 'labs', label: 'Praktikum mandiri', icon: FlaskConical },
+    ],
+  },
 ]
 
-const setTab = (id) => {
-  emit('update:currentTab', id)
-}
+const groups = computed(() => (props.role === 'student' ? studentGroups : teacherGroups))
 </script>
 
 <template>
-  <aside 
+  <aside
     :class="[
-      'bg-white flex flex-col justify-between p-4 shrink-0',
-      isMobile ? 'w-full min-h-0' : 'w-64 border-r border-slate-100 min-h-[calc(100vh-5rem)]'
+      'flex flex-col justify-between bg-surface',
+      isMobile ? 'h-full w-full' : 'sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 border-r border-line md:flex',
     ]"
   >
-    <!-- Top Nav Section -->
-    <div class="space-y-6">
-      <!-- Section: MENU UTAMA -->
-      <div>
-        <p class="text-[11px] font-bold tracking-wider text-slate-400 uppercase px-3 mb-3">
-          {{ role === 'student' ? 'MENU SISWA' : 'MENU GURU' }}
-        </p>
-        <nav class="space-y-1">
-          <button
-            v-for="item in (role === 'student' ? studentMenus : teacherMenus)"
-            :key="item.id"
-            @click="setTab(item.id)"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150"
-            :class="currentTab === item.id 
-              ? 'bg-chemist-dark text-white shadow-md shadow-slate-900/10' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
-          >
-            <div class="flex items-center gap-3">
-              <component :is="item.icon" class="w-4 h-4" :class="currentTab === item.id ? 'text-white' : 'text-slate-400'" />
-              <span>{{ item.label }}</span>
-            </div>
-
-            <!-- Badges if any -->
-            <span 
-              v-if="item.id === 'labs'" 
-              class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-              :class="currentTab === item.id ? 'bg-sky-500/30 text-sky-200' : 'bg-sky-50 text-sky-600'"
+    <nav class="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi utama">
+      <div v-for="group in groups" :key="group.label" class="mb-5 last:mb-0">
+        <p class="kf-group-label px-2 pb-1.5">{{ group.label }}</p>
+        <ul class="space-y-0.5">
+          <li v-for="item in group.items" :key="item.id">
+            <button
+              type="button"
+              @click="emit('update:currentTab', item.id)"
+              :aria-current="currentTab === item.id ? 'page' : undefined"
+              class="relative flex min-h-[44px] w-full items-center gap-2.5 rounded-md py-2 pl-3 pr-2.5 text-left text-[13px] transition-colors"
+              :class="
+                currentTab === item.id
+                  ? 'bg-sunken font-semibold text-ink'
+                  : 'font-medium text-ink-muted hover:bg-sunken hover:text-ink'
+              "
             >
-              Lab
-            </span>
-          </button>
-        </nav>
+              <span
+                v-if="currentTab === item.id"
+                class="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full bg-accent"
+                aria-hidden="true"
+              ></span>
+              <component
+                :is="item.icon"
+                class="h-4 w-4 shrink-0"
+                :class="currentTab === item.id ? 'text-accent' : 'text-ink-faint'"
+                aria-hidden="true"
+              />
+              <span class="truncate">{{ item.label }}</span>
+            </button>
+          </li>
+        </ul>
       </div>
+    </nav>
 
-      <!-- Section: AKUN & SISTEM -->
-      <div>
-        <p class="text-[11px] font-bold tracking-wider text-slate-400 uppercase px-3 mb-3">AKUN & SISTEM</p>
-        <nav class="space-y-1">
-          <button
-            @click="setTab('settings')"
-            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            :class="currentTab === 'settings' 
-              ? 'bg-chemist-dark text-white shadow-md shadow-slate-900/10' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
-          >
-            <Settings class="w-4 h-4" :class="currentTab === 'settings' ? 'text-white' : 'text-slate-400'" />
-            <span>Pengaturan</span>
-          </button>
-        </nav>
-      </div>
+    <div class="border-t border-line px-3 py-3">
+      <button
+        type="button"
+        @click="emit('update:currentTab', 'settings')"
+        :aria-current="currentTab === 'settings' ? 'page' : undefined"
+        class="relative flex min-h-[44px] w-full items-center gap-2.5 rounded-md py-2 pl-3 pr-2.5 text-left text-[13px] transition-colors"
+        :class="
+          currentTab === 'settings'
+            ? 'bg-sunken font-semibold text-ink'
+            : 'font-medium text-ink-muted hover:bg-sunken hover:text-ink'
+        "
+      >
+        <span
+          v-if="currentTab === 'settings'"
+          class="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full bg-accent"
+          aria-hidden="true"
+        ></span>
+        <Settings
+          class="h-4 w-4 shrink-0"
+          :class="currentTab === 'settings' ? 'text-accent' : 'text-ink-faint'"
+          aria-hidden="true"
+        />
+        Pengaturan
+      </button>
+
+      <button
+        type="button"
+        @click="emit('logout')"
+        class="flex min-h-[44px] w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-ink-muted transition-colors hover:bg-danger-50 hover:text-danger-700"
+      >
+        <LogOut class="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" />
+        Keluar
+      </button>
     </div>
   </aside>
 </template>
